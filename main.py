@@ -294,6 +294,12 @@ class StatusBar(tk.Label):
 class Main(tk.Tk):
     def __init__(self):
         tk.Tk.__init__(self)
+
+        # Create recent files file if not already created
+        if not os.path.exists(RECENT_FILES):
+            with open(RECENT_FILES, 'w+') as file:
+                file.write('')
+
         self.geometry('1000x500')
         self.title('Untitled.txt')
         self.protocol('WM_DELETE_WINDOW', self.close)
@@ -319,11 +325,6 @@ class Main(tk.Tk):
         self.bind('<Control_L>o', self.file_menu.open_file)
         self.bind('<Control_L>s', self.file_menu.save_file)
         self.bind('<Control_L>n', self.file_menu.new_file)
-
-        # Create recent files file if not already created
-        if not os.path.exists(RECENT_FILES):
-            with open(RECENT_FILES, 'w+') as file:
-                file.write('')
 
     def save_recent_files(self):
         with open(RECENT_FILES, 'w+') as file:
