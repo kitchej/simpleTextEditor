@@ -177,7 +177,7 @@ class FileMenu(tk.Menu):
         self.recent_menu.delete(0, tk.END)
         for f in self.recent_files:
             self.recent_menu.add_command(label=f"{f.split('/')[-1].strip()}",
-                                         command=lambda name=f.strip(): self.open_file(name))
+                                         command=lambda name=f.strip(): self.open_file(in_filename=name, event=None))
 
     def new_file(self, *args):
         if not self.saved:
@@ -186,7 +186,7 @@ class FileMenu(tk.Menu):
             if answer:
                 self.quick_save()
 
-        self.delete(0.0, tk.END)
+        self.text_widget.delete(0.0, tk.END)
         self.filepath = 'Untitled.txt'
         self.parent.title(self.filepath)
         self.saved = True
