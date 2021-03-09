@@ -17,9 +17,6 @@ class StatusBar(tk.Label):
         self.status_text = f"Ln: {self.line.get()} Col: {self.column.get()}"
         self.configure(relief='sunken', text=self.status_text, anchor='e')
 
-    def update_text(self):
-        print(self.text_widget.INSERT)
-
 
 class Main(tk.Tk):
     def __init__(self):
