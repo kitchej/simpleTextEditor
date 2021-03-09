@@ -15,11 +15,8 @@ class Editor(tk.Text):
     def __init__(self, parent):
         tk.Text.__init__(self)
         self.parent = parent
-        self.settings_file = os.path.abspath('editor_settings')
-        self.scrollbar = tk.Scrollbar(self, command=self.yview_scroll)
-        self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-        self.configure(yscrollcommand=self.scrollbar.set)
-
+        self.settings_file = 'editor_settings'
+        
         # Create an editor settings file if not already present
         if not os.path.exists(self.settings_file):
             with open(self.settings_file, 'w+') as file:
@@ -28,6 +25,10 @@ class Editor(tk.Text):
             self.font_size = 12
         else:
             self.load_settings()
+            
+        self.scrollbar = tk.Scrollbar(self, command=self.yview_scroll)
+        self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        self.configure(yscrollcommand=self.scrollbar.set)
 
     def load_settings(self):
         try:
@@ -60,10 +61,17 @@ class Editor(tk.Text):
 class FileMenu(tk.Menu):
     def __init__(self, parent, text_widget):
         tk.Menu.__init__(self, tearoff=0)
+        self.recent_files_save = 'recent_files'
+        
+        # Create recent files file if not already created
+        if not os.path.exists(self.recent_files_save):
+            with open(self.recent_files_save, 'w+') as file:
+                file.write('')
+                
         self.parent = parent
         self.text_widget = text_widget
         self.saved = True
-        self.recent_files_save = os.path.abspath('recent_files')
+        
         self.recent_files = self.open_recent_files()
         self.filepath = ''
         self.add_command(label='Open', accelerator='Ctrl+O', command=lambda: self.open_file(event=None))
@@ -78,11 +86,7 @@ class FileMenu(tk.Menu):
         self.add_command(label='Save as', command=self.save_as)
         self.add_command(label='New', accelerator='Ctrl+N', command=self.new_file)
 
-        # Create recent files file if not already created
-        if not os.path.exists(self.recent_files_save):
-            with open(self.recent_files_save, 'w+') as file:
-                file.write('')
-
+       
     def save_recent_files(self):
         with open(self.recent_files_save, 'w+') as file:
             for f in self.recent_files:
@@ -119,7 +123,7 @@ class FileMenu(tk.Menu):
             return
         else:
             self.filepath = chosen_filepath
-
+        
         self.save_file()
 
     def open_file(self, event, in_filename=None):
@@ -215,7 +219,7 @@ class EditMenu(tk.Menu):
                          command=self.add_timestamp)
 
     def add_timestamp(self, *args):
-        self.text_widget.insert(tk.INSERT, datetime.now().strftime('%-I:%M %p %-m/%-d/%Y'))
+        self.text_widget.insert(tk.INSERT, datetime.now().strftime('%I:%M %p %m/%d/%Y'))
 
 
 class FormatMenu(tk.Menu):
