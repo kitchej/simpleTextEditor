@@ -1,6 +1,9 @@
+#!/usr/bin/python3
+
 import tkinter as tk
 from tkinter import messagebox
 import os
+import sys
 
 from text_editor_classes import Editor, FileMenu, EditMenu, FormatMenu
 
@@ -19,7 +22,7 @@ class StatusBar(tk.Label):
 
 
 class Main(tk.Tk):
-    def __init__(self):
+    def __init__(self, in_file=None):
         tk.Tk.__init__(self)
         self.geometry('1000x500')
         self.title('Untitled.txt')
@@ -46,6 +49,10 @@ class Main(tk.Tk):
         self.bind('<Control_L>o', self.file_menu.open_file)
         self.bind('<Control_L>s', self.file_menu.quick_save)
         self.bind('<Control_L>n', self.file_menu.new_file)
+
+        self.in_file = in_file
+        if in_file:
+            self.file_menu.open_file(in_filename=self.in_file, event=None)
 
     # Updates:
     # - The self.editor.save flag
@@ -94,5 +101,17 @@ class Main(tk.Tk):
                 self.quit()
 
 
+def main():
+    args = sys.argv
+    if len(args) > 2:
+        print("Too many parameters!")
+        return
+    elif len(args) == 1:
+        m = Main()
+    else:
+        m = Main(args[1])
+    m.mainloop()
+
+
 if __name__ == '__main__':
-    Main().mainloop()
+    main()

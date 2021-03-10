@@ -26,7 +26,7 @@ class Editor(tk.Text):
         else:
             self.load_settings()
             
-        self.scrollbar = tk.Scrollbar(self, command=self.yview_scroll)
+        self.scrollbar = tk.Scrollbar(self, command=self.yview, cursor='arrow')
         self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         self.configure(yscrollcommand=self.scrollbar.set)
 
