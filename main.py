@@ -1,8 +1,5 @@
-#!/usr/bin/python3
-
 import tkinter as tk
 from tkinter import messagebox
-import os
 import sys
 
 from text_editor_classes import Editor, FileMenu, EditMenu, FormatMenu
@@ -46,6 +43,7 @@ class Main(tk.Tk):
         self.bind('<Key>', self.general_update)
         self.bind('<Button-1>', self.general_update)
         self.bind('<F5>', self.edit_menu.add_timestamp)
+        self.bind('<F7>', self.edit_menu.spell_check)
         self.bind('<Control_L>o', self.file_menu.open_file)
         self.bind('<Control_L>s', self.file_menu.quick_save)
         self.bind('<Control_L>n', self.file_menu.new_file)
@@ -58,20 +56,8 @@ class Main(tk.Tk):
     # - The self.editor.save flag
     # - Line and Column number
     def general_update(self, *args):
-
         # Update self.file_menu.saved flag and modify self.title
-        if self.file_menu.filepath == '':
-            saved_text = ""
-        elif os.path.exists(self.file_menu.filepath):
-            with open(self.file_menu.filepath, 'r') as f:
-                saved_text = f.read().strip()
-        else:
-            saved_text = ""
-
-        current_text = self.editor.get(0.0, tk.END).strip()
-
-        if saved_text != current_text:
-            self.file_menu.saved = False
+        if self.editor.edit_modified():
             filename = self.file_menu.filepath.split('/')[-1]
             if filename == '':
                 filename = 'Untitled.txt'
@@ -84,9 +70,12 @@ class Main(tk.Tk):
         self.status.column.set(index[1])
         self.status.configure(text=f"Line: {self.status.line.get()} Col: {self.status.column.get()}")
 
+        # debug
+        print(self.editor.edit_modified())
+
     def close(self):
         self.file_menu.save_recent_files()
-        if self.file_menu.saved:
+        if self.editor.edit_modified() == 0:
             self.quit()
         else:
             name = self.file_menu.filepath.split('/')[-1]
