@@ -385,9 +385,6 @@ class SpellCheckWin:
             messagebox.showinfo("Complete", "Spell check is complete")
             self.parent.destroy()
 
-    @staticmethod
-    def sort_key(item):
-        return float(item[1])
 
     def parse_words(self):
         out = []
