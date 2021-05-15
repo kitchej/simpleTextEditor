@@ -4,7 +4,6 @@ Written by Joshua Kitchen - March 2021
 
 A basic text editor app with file, edit, format, and tool menus implemented in tkinter.
 UPDATED MAY 2021:
-- added spell checker
 - added find and replace functionality
 - various tweaks and bug fixes
 """
