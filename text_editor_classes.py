@@ -14,9 +14,6 @@ from datetime import datetime
 import os
 from pathlib import Path
 
-from spellchecker import SpellChecker
-
-SPELL_CHECK_WIN = None
 FIND_AND_REP_WIN = None
 FONT_CHOOSE_WIN = None
 
@@ -150,7 +147,7 @@ class FileMenu(tk.Menu):
         self.save_file()
 
     def open_file(self, event, in_filename=None):
-        global SPELL_CHECK_WIN, FIND_AND_REP_WIN, FONT_CHOOSE_WIN
+        global FIND_AND_REP_WIN, FONT_CHOOSE_WIN
         if self.text_widget.edit_modified() == 1:
             filename = os.path.split(self.filepath)[-1]
             answer = messagebox.askyesno('Save?', f'Would you like to save {filename} first?')
@@ -186,15 +183,13 @@ class FileMenu(tk.Menu):
         self.parent.title(os.path.split(self.filepath)[-1])
         self.update_recent_files()
         self.text_widget.edit_modified(False)
-        if isinstance(SPELL_CHECK_WIN, tk.Toplevel):
-            SPELL_CHECK_WIN.destroy()
         if isinstance(FIND_AND_REP_WIN, tk.Toplevel):
             FIND_AND_REP_WIN.destroy()
         if isinstance(FONT_CHOOSE_WIN, tk.Toplevel):
             FONT_CHOOSE_WIN.destroy()
 
     def new_file(self, *args):
-        global SPELL_CHECK_WIN, FIND_AND_REP_WIN, FONT_CHOOSE_WIN
+        global FIND_AND_REP_WIN, FONT_CHOOSE_WIN
         if self.text_widget.edit_modified() == 1:
             filename = os.path.split(self.filepath)[-1]
             answer = messagebox.askyesno('Save?', f'Would you like to save {filename} first?')
@@ -204,8 +199,6 @@ class FileMenu(tk.Menu):
         self.filepath = 'Untitled.txt'
         self.parent.title(self.filepath)
         self.text_widget.edit_modified(False)
-        if isinstance(SPELL_CHECK_WIN, tk.Toplevel):
-            SPELL_CHECK_WIN.destroy()
         if isinstance(FIND_AND_REP_WIN, tk.Toplevel):
             FIND_AND_REP_WIN.destroy()
         if isinstance(FONT_CHOOSE_WIN, tk.Toplevel):
@@ -224,9 +217,25 @@ class EditMenu(tk.Menu):
         self.add_command(label='Paste', accelerator='Ctrl+V',
                          command=lambda: self.text_widget.event_generate('<<Paste>>'))
         self.add_command(label='Add Timestamp', accelerator='F5', command=self.add_timestamp)
+        self.add_command(label='Find and Replace', accelerator='Ctrl+F', command=self.find_and_replace)
 
     def add_timestamp(self, *args):
         self.text_widget.insert(tk.INSERT, datetime.now().strftime('%I:%M %p %m/%d/%Y'))
+
+    def find_and_replace(self, *args):
+        global FIND_AND_REP_WIN
+        if isinstance(FIND_AND_REP_WIN, tk.Toplevel):
+            self.__quit_find_and_replace()
+        FIND_AND_REP_WIN = tk.Toplevel()
+        FIND_AND_REP_WIN.protocol('WM_DELETE_WINDOW', self.__quit_find_and_replace)
+        FIND_AND_REP_WIN.bind('<Destroy>', self.__quit_find_and_replace)
+        f = FindAndReplaceWin(FIND_AND_REP_WIN, self.text_widget)
+
+    def __quit_find_and_replace(self, *args):
+        global FIND_AND_REP_WIN
+        clear_tags('found', self.text_widget)
+        if isinstance(FIND_AND_REP_WIN, tk.Toplevel):
+            FIND_AND_REP_WIN.destroy()
 
 
 class FormatMenu(tk.Menu):
@@ -234,12 +243,15 @@ class FormatMenu(tk.Menu):
         tk.Menu.__init__(self, tearoff=0)
         self.parent = parent
         self.text_widget = text_widget
-        self.add_command(label='Font', command=self.change_font)
+        self.add_command(label='Editor Font', command=self.change_font)
         self.font_size_menu = tk.Menu(self.parent, tearoff=0)
         self.sizes = [8, 9, 10, 11, 12, 13, 14, 18, 20, 24, 28, 30, 35, 40]
         for size in self.sizes:
-            self.font_size_menu.add_command(label=f"{size}", command=lambda s=size: self.change_font_size(s))
-        self.add_cascade(label='Text Size', menu=self.font_size_menu)
+            if size == self.text_widget.font_size:
+                self.font_size_menu.add_command(label=f"•{size}", command=lambda s=size: self.change_font_size(s))
+            else:
+                self.font_size_menu.add_command(label=f"  {size}", command=lambda s=size: self.change_font_size(s))
+        self.add_cascade(label='Editor Text Size', menu=self.font_size_menu)
 
     def change_font(self):
         global FONT_CHOOSE_WIN
@@ -255,39 +267,12 @@ class FormatMenu(tk.Menu):
             lines[1] = f"font-size:{text_size}"
             file.write(f"{lines[0].strip()}\n{lines[1]}")
         self.text_widget.load_settings()
-
-
-class ToolsMenu(tk.Menu):
-    def __init__(self, parent, text_widget, file_menu_obj):
-        tk.Menu.__init__(self, tearoff=0)
-        self.parent = parent
-        self.text_widget = text_widget
-        self.file_menu_obj = file_menu_obj  # for naming the 'ignore' file
-        self.add_command(label='Spell Check', accelerator='F7', command=self.spell_check)
-        self.add_command(label='Find and Replace', accelerator='Ctrl+F', command=self.find_and_replace)
-
-    def spell_check(self, *args):
-        global SPELL_CHECK_WIN
-        if isinstance(FIND_AND_REP_WIN, tk.Toplevel):
-            SPELL_CHECK_WIN.destroy()
-        SPELL_CHECK_WIN = tk.Toplevel()
-        filename = os.path.split(self.file_menu_obj.filepath)[-1]
-        f = SpellCheckWin(SPELL_CHECK_WIN, self.text_widget, f"{filename}_ignore")
-        
-    def find_and_replace(self, *args):
-        global FIND_AND_REP_WIN
-        if isinstance(FIND_AND_REP_WIN, tk.Toplevel):
-            self.__quit_find_and_replace()
-        FIND_AND_REP_WIN = tk.Toplevel()
-        FIND_AND_REP_WIN.protocol('WM_DELETE_WINDOW', self.__quit_find_and_replace)
-        FIND_AND_REP_WIN.bind('<Destroy>', self.__quit_find_and_replace)
-        f = FindAndReplaceWin(FIND_AND_REP_WIN, self.text_widget)
-
-    def __quit_find_and_replace(self, *args):
-        global FIND_AND_REP_WIN
-        clear_tags('found', self.text_widget)
-        if isinstance(FIND_AND_REP_WIN, tk.Toplevel):
-            FIND_AND_REP_WIN.destroy()
+        self.font_size_menu.delete(0, tk.END)
+        for size in self.sizes:
+            if size == self.text_widget.font_size:
+                self.font_size_menu.add_command(label=f"•{size}", command=lambda s=size: self.change_font_size(s))
+            else:
+                self.font_size_menu.add_command(label=f"  {size}", command=lambda s=size: self.change_font_size(s))
 
 
 class FontChooser:
@@ -329,118 +314,6 @@ class FontChooser:
             file.write(f"{lines[0]}\n{lines[1]}")
         self.controller.load_settings()
         self.parent.destroy()
-
-
-class SpellCheckWin:
-    """Simple interface for performing a spell check"""
-    def __init__(self, parent, text_widget, ignore_file):
-        self.parent = parent
-        self.parent.title("Spell Check")
-        self.text_widget = text_widget
-        self.suggestions = []
-        self.punctuation = ['`', '~', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', '-', '=', '{', '}',
-                            '|', '[', ']', '\\', ':', '\"', ';', '\'', '<', '>', '?', ',', '.', '/']
-        self.text = self.text_widget.get(0.0, tk.END)
-        self.spell_checker = SpellChecker()
-        self.current_word = tk.StringVar()
-        self.ignore_file = ignore_file
-        if os.path.exists(self.ignore_file):
-            with open(self.ignore_file, 'r') as file:
-                self.ignored_words = [i.strip("\n") for i in file.readlines()]
-        else:
-            with open(self.ignore_file, 'w+') as file:
-                file.write("")
-            self.ignored_words = []
-        words = self.parse_words()
-        self.unknown_words = list(self.spell_checker.unknown(words))
-        self.misspelled_words = []
-        for word in words:  # Sorts the misspelled words in the order they appear in the document
-            if word in self.unknown_words:
-                self.misspelled_words.append(word)
-        if self.misspelled_words:
-            for word in self.misspelled_words:
-                if word in self.ignored_words:
-                    continue
-                self.suggestions.append([word, tuple(self.spell_checker.candidates(word))])
-            self.preview = tk.Label(self.parent, textvariable=self.current_word, fg='red')
-            self.suggestions_label = tk.Label(self.parent, text="Did you mean?: ")
-            self.suggestions_box = tk.Listbox(self.parent, height=5)
-            self.replace_button = tk.Button(self.parent, text='Replace', command=self.replace)
-            self.replace_all_button = tk.Button(self.parent, text='Replace All', command=self.replace_all)
-            self.ignore_button = tk.Button(self.parent, text='Ignore', command=self.ignore)
-            self.ignore_all_button = tk.Button(self.parent, text='Ignore All', command=self.ignore_all)
-            self.preview.grid(row=0, column=0, pady=10)
-            self.suggestions_label.grid(row=1, column=0, pady=5)
-            self.suggestions_box.grid(row=2, column=0, columnspan=2)
-            self.replace_button.grid(row=3, column=0)
-            self.ignore_button.grid(row=3, column=1)
-            self.replace_all_button.grid(row=4, column=0)
-            self.ignore_all_button.grid(row=4, column=1)
-            if self.suggestions:
-                self.current_word.set(self.suggestions[0][0])
-                for i in self.suggestions[0][1]:
-                    self.suggestions_box.insert(tk.END, i)
-                self.suggestions_box.selection_set(0)
-        else:
-            messagebox.showinfo("Complete", "Spell check is complete")
-            self.parent.destroy()
-
-
-    def parse_words(self):
-        out = []
-        for word in self.text.split():
-            if word[0] in self.punctuation:
-                word = word.strip(word[1])
-            elif word[-1] in self.punctuation:
-                word = word.strip(word[-1])
-            out.append(word)
-        return out
-
-    def refresh(self):
-        if not self.suggestions:
-            messagebox.showinfo("Complete", "Spell check is complete")
-            self.parent.destroy()
-        else:
-            self.current_word.set(self.suggestions[0][0])
-            self.suggestions_box.delete(0, tk.END)
-            for i in self.suggestions[0][1]:
-                self.suggestions_box.insert(tk.END, i)
-            self.suggestions_box.selection_set(0)
-
-    def ignore(self):
-        ignored_word = self.suggestions.pop(0)
-        with open(self.ignore_file, 'a') as file:
-            file.write(f"{ignored_word[0]}\n")
-        self.refresh()
-
-    def ignore_all(self):
-        word = self.current_word.get()
-        with open(self.ignore_file, 'a') as file:
-            file.write(f"{word}\n")
-        self.suggestions = [i for i in self.suggestions if i[0] != word]
-        self.refresh()
-
-    def replace(self):
-        if self.suggestions_box.curselection() == ():
-            return
-        indexes = get_word_indexes(self.current_word.get(), self.text_widget)
-        new_word = self.suggestions_box.get(self.suggestions_box.curselection())
-        self.text_widget.delete(indexes[0][0], indexes[0][1])
-        self.text_widget.insert(indexes[0][0], new_word)
-        self.suggestions.pop(0)
-        self.refresh()
-
-    def replace_all(self):
-        if self.suggestions_box.curselection() == ():
-            return
-        word = self.current_word.get()
-        indexes = get_word_indexes(word, self.text_widget)
-        new_word = self.suggestions_box.get(self.suggestions_box.curselection())
-        for i in indexes:
-            self.text_widget.delete(i[0], i[1])
-            self.text_widget.insert(i[0], new_word)
-        self.suggestions = [i for i in self.suggestions if i[0] != word]
-        self.refresh()
 
 
 class FindAndReplaceWin:
@@ -600,17 +473,14 @@ if __name__ == '__main__':
     main_menu = tk.Menu(root)
     file_menu = FileMenu(root, editor)
     edit_menu = EditMenu(root, editor)
-    tools_menu = ToolsMenu(root, editor, file_menu)
     format_menu = FormatMenu(root, editor)
     main_menu.add_cascade(menu=file_menu, label='File')
     main_menu.add_cascade(menu=edit_menu, label='Edit')
-    main_menu.add_cascade(menu=tools_menu, label='Tools')
     main_menu.add_cascade(menu=format_menu, label='Format')
     root.bind('<F5>', edit_menu.add_timestamp)
     root.bind('<Control_L>o', file_menu.open_file)
     root.bind('<Control_L>s', file_menu.quick_save)
     root.bind('<Control_L>n', file_menu.new_file)
-    root.bind('<Control-L>f', tools_menu.find_and_replace)
-    root.bind('<F7>', tools_menu.spell_check)
+    root.bind('<Control-L>f', edit_menu.find_and_replace)
     root.configure(menu=main_menu)
     root.mainloop()

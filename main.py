@@ -1,8 +1,9 @@
 import tkinter as tk
 from tkinter import messagebox
 import sys
+import os
 
-from text_editor_classes import Editor, FileMenu, EditMenu, ToolsMenu, FormatMenu
+from text_editor_classes import Editor, FileMenu, EditMenu, FormatMenu
 
 
 class StatusBar(tk.Label):
@@ -31,11 +32,9 @@ class Main(tk.Tk):
         self.main_menu = tk.Menu(self)
         self.file_menu = FileMenu(self, self.editor)
         self.edit_menu = EditMenu(self, self.editor)
-        self.tools_menu = ToolsMenu(self, self.editor, self.file_menu)
         self.format_menu = FormatMenu(self, self.editor)
         self.main_menu.add_cascade(menu=self.file_menu, label='File')
         self.main_menu.add_cascade(menu=self.edit_menu, label='Edit')
-        self.main_menu.add_cascade(menu=self.tools_menu, label='Tools')
         self.main_menu.add_cascade(menu=self.format_menu, label='Format')
         self.configure(menu=self.main_menu)
         # Status Bar
@@ -45,8 +44,7 @@ class Main(tk.Tk):
         self.bind('<Key>', self.general_update)
         self.bind('<Button-1>', self.general_update)
         self.bind('<F5>', self.edit_menu.add_timestamp)
-        self.bind('<F7>', self.tools_menu.spell_check)
-        self.bind('<Control_L>f', self.tools_menu.find_and_replace)
+        self.bind('<Control_L>f', self.edit_menu.find_and_replace)
         self.bind('<Control_L>o', self.file_menu.open_file)
         self.bind('<Control_L>s', self.file_menu.quick_save)
         self.bind('<Control_L>n', self.file_menu.new_file)
@@ -58,7 +56,7 @@ class Main(tk.Tk):
     def general_update(self, *args):
         # Update self.file_menu.saved flag and modify self.title
         if self.editor.edit_modified():
-            filename = self.file_menu.filepath.split('/')[-1]
+            filename = os.path.split(self.file_menu.filepath)[-1]
             self.title(f'*{filename}')
         # Update Line and Column
         index = self.editor.index(tk.INSERT)
