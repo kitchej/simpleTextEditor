@@ -63,7 +63,7 @@ class Editor(tk.Text):
 class FileMenu(tk.Menu):
     def __init__(self, parent, text_widget):
         tk.Menu.__init__(self, tearoff=0)
-        self.recent_files_save = 'recent_files'
+        self.recent_files_save = 'recent_files' # saves recently opened files
         if not os.path.exists(self.recent_files_save):
             with open(self.recent_files_save, 'w+') as file:
                 file.write('')
@@ -84,6 +84,9 @@ class FileMenu(tk.Menu):
         self.add_command(label='New', accelerator='Ctrl+N', command=self.new_file)
 
     def open_recent_files(self):
+        '''
+        Opens a file containing recenly viewed files and returns the filenames
+        '''
         with open(self.recent_files_save, 'r') as f:
             files = f.read()
             recent_files = []
@@ -94,11 +97,17 @@ class FileMenu(tk.Menu):
         return recent_files
 
     def save_recent_files(self):
+        '''
+        Saves rhe filenames of recently viewed files stored in self.recent_files to the recent_files file
+        '''
         with open(self.recent_files_save, 'w+') as file:
             for f in self.recent_files:
                 file.write(f"{f},")
 
     def update_recent_files(self):
+        '''
+        Adds a recently opened file to the recent_files file and then updates the recent files menu
+        '''
         if self.filepath in self.recent_files:
             self.recent_files.remove(self.filepath)
         self.recent_files.insert(0, self.filepath)
@@ -110,8 +119,11 @@ class FileMenu(tk.Menu):
                 self.recent_menu.add_command(
                     label=f"{f.split('/')[-1].strip()}",
                     command=lambda name=f.strip(): self.open_file(in_filename=name, event=None))
-
+                
     def save_file(self):
+        '''
+        A general method for saving text in the editor
+        '''
         text = self.text_widget.get(0.0, tk.END)
         try:
             with open(self.filepath, 'w+') as file:
@@ -124,14 +136,7 @@ class FileMenu(tk.Menu):
             return
         self.parent.title(os.path.split(self.filepath)[-1])
         self.text_widget.edit_modified(False)
-
-    def quick_save(self, *args):
-        if not os.path.exists(self.filepath):
-            self.save_as()
-            return
-        else:
-            self.save_file()
-
+                
     def save_as(self):
         chosen_filepath = filedialog.asksaveasfilename(filetypes=[('All', '*'), ('.txt', '*.txt')],
                                                        initialdir=Path.home())
@@ -145,6 +150,16 @@ class FileMenu(tk.Menu):
         self.update_recent_files()
         self.save_file()
 
+    def quick_save(self, *args):
+        '''
+        A quicker save. If the file already exists, it skips asking for a filename
+        '''
+        if not os.path.exists(self.filepath):
+            self.save_as()
+            return
+        else:
+            self.save_file()
+            
     def open_file(self, event, in_filename=None):
         global FIND_AND_REP_WIN, FONT_CHOOSE_WIN
         if self.text_widget.edit_modified() == 1:
@@ -275,7 +290,9 @@ class FormatMenu(tk.Menu):
 
 
 class FontChooser:
-    """Simple interface for choosing a font"""
+    """
+    Simple interface for choosing a font
+    """
     def __init__(self, parent, controller):
         self.parent = parent
         self.parent.title("Font")
@@ -316,7 +333,9 @@ class FontChooser:
 
 
 class FindAndReplaceWin:
-    """Simple interface for find and replace operations"""
+    """
+    Simple interface for find and replace operations
+    """
     def __init__(self, parent, text_widget):
         self.parent = parent
         self.parent.title("Find and Replace")
