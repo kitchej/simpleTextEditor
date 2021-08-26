@@ -7,6 +7,9 @@ from text_editor_classes import Editor, FileMenu, EditMenu, FormatMenu
 
 
 class StatusBar(tk.Label):
+    '''
+    Keeps track of column and line number
+    '''
     def __init__(self, parent, text_widget):
         tk.Label.__init__(self)
         self.parent = parent
