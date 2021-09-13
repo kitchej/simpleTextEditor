@@ -19,6 +19,10 @@ class StatusBar(ttk.Label):
         self.configure(text=self.status_text, anchor='e')
 
 
+class Test:
+    pass
+
+
 class Main(tk.Tk):
     def __init__(self, in_file=None):
         tk.Tk.__init__(self)
