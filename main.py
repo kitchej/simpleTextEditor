@@ -1,4 +1,5 @@
 import tkinter as tk
+import tkinter.ttk as ttk
 from tkinter import messagebox
 import sys
 import os
@@ -6,20 +7,16 @@ import os
 from text_editor_classes import Editor, FileMenu, EditMenu, FormatMenu
 
 
-class StatusBar(tk.Label):
-    '''
-    Keeps track of column and line number
-    '''
-    def __init__(self, parent, text_widget):
-        tk.Label.__init__(self)
+class StatusBar(ttk.Label):
+    def __init__(self, parent):
+        ttk.Label.__init__(self)
         self.parent = parent
-        self.text_widget = text_widget
         self.line = tk.StringVar()
         self.column = tk.StringVar()
         self.line.set("0")
         self.column.set("0")
-        self.status_text = f"Ln: {self.line.get()} Col: {self.column.get()}"
-        self.configure(relief='sunken', text=self.status_text, anchor='e')
+        self.status_text = f"Ln {self.line.get()}, Col {self.column.get()}"
+        self.configure(text=self.status_text, anchor='e')
 
 
 class Main(tk.Tk):
@@ -41,7 +38,7 @@ class Main(tk.Tk):
         self.main_menu.add_cascade(menu=self.format_menu, label='Format')
         self.configure(menu=self.main_menu)
         # Status Bar
-        self.status = StatusBar(self, self.editor)
+        self.status = StatusBar(self)
         self.status.pack(fill=tk.X)
         # Key Bindings
         self.bind('<Key>', self.general_update)
@@ -66,7 +63,7 @@ class Main(tk.Tk):
         index = index.split('.')
         self.status.line.set(index[0])
         self.status.column.set(index[1])
-        self.status.configure(text=f"Line: {self.status.line.get()} Col: {self.status.column.get()}")
+        self.status.configure(text=f"Ln {self.status.line.get()}, Col {self.status.column.get()}")
 
     def close(self):
         self.file_menu.save_recent_files()
