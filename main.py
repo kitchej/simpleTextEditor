@@ -72,7 +72,6 @@ class Main(tk.Tk):
         else:
             name = self.file_menu.filepath.split('/')[-1]
             answer = messagebox.askyesnocancel(title='Save?', message=f'Do you want to save {name} before quitting?')
-
             if answer == 'yes':
                 self.file_menu.quick_save()
                 self.quit()

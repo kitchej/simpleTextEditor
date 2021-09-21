@@ -77,7 +77,7 @@ class FileMenu(tk.Menu):
         for f in self.recent_files:
             if os.path.exists(f):
                 self.recent_menu.add_command(
-                    label=f"{f.split('/')[-1].strip()}",
+                    label=f"{os.path.split(f)[-1].strip()}",
                     command=lambda name=f.strip(): self.open_file(in_filename=name, event=None))
         self.add_cascade(label='Recent Files', menu=self.recent_menu)
         self.add_command(label='Save', accelerator='Ctrl+S', command=self.quick_save)
@@ -109,7 +109,7 @@ class FileMenu(tk.Menu):
         for f in self.recent_files:
             if os.path.exists(f):
                 self.recent_menu.add_command(
-                    label=f"{f.split('/')[-1].strip()}",
+                    label=f"{os.path.split(f)[-1].strip()}",
                     command=lambda name=f.strip(): self.open_file(in_filename=name, event=None))
 
     def _save_file(self):
@@ -143,11 +143,10 @@ class FileMenu(tk.Menu):
 
     def quick_save(self, *args):
         """Saves if file exists, calls save_as() if not"""
-        if not os.path.exists(self.filepath):
-            self.save_as()
-            return
-        else:
+        if os.path.exists(self.filepath):
             self._save_file()
+        else:
+            self.save_as()
 
     def open_file(self, event, in_filename=None):
         global FIND_AND_REP_WIN, FONT_CHOOSE_WIN
@@ -157,14 +156,14 @@ class FileMenu(tk.Menu):
             if answer:
                 self.quick_save()
         if in_filename:
-            self.filepath = in_filename
+            self.filepath = os.path.abspath(in_filename)
         else:
             chosen_filepath = filedialog.askopenfilename(filetypes=[('All', '*'), ('.txt', '*.txt')],
                                                          initialdir=Path.home())
             if chosen_filepath == ():
                 return
             else:
-                self.filepath = chosen_filepath
+                self.filepath = os.path.abspath(chosen_filepath)
         if not os.path.exists(self.filepath):
             filename = os.path.split(self.filepath)[-1]
             messagebox.showerror('Unknown File', f'Could not find file: {filename}')
