@@ -152,8 +152,9 @@ class FileMenu(tk.Menu):
 
     def open_file(self, event, in_filename=None):
         global FIND_AND_REP_WIN, FONT_CHOOSE_WIN
+        filename = os.path.split(self.filepath)[-1]
         if self.text_widget.edit_modified() == 1:
-            filename = os.path.split(self.filepath)[-1]
+
             answer = messagebox.askyesno('Save?', f'Would you like to save {filename} first?')
             if answer:
                 self.quick_save()
@@ -167,7 +168,6 @@ class FileMenu(tk.Menu):
             else:
                 self.filepath = os.path.abspath(chosen_filepath)
         if not os.path.exists(self.filepath):
-            filename = os.path.split(self.filepath)[-1]
             messagebox.showerror('Unknown File', f'Could not find file: {filename}')
             return
         try:
@@ -185,6 +185,7 @@ class FileMenu(tk.Menu):
         self.text_widget.delete(0.0, tk.END)
         self.text_widget.insert(0.0, text.strip('\n'))
         self.parent.title(os.path.split(self.filepath)[-1])
+        self.parent.filename = filename
         self.update_recent_files()
         self.text_widget.edit_modified(False)
         if isinstance(FIND_AND_REP_WIN, tk.Toplevel):
@@ -201,6 +202,7 @@ class FileMenu(tk.Menu):
                 self.quick_save()
         self.text_widget.delete(0.0, tk.END)
         self.filepath = 'Untitled.txt'
+        self.parent.filename = self.filepath
         self.parent.title(self.filepath)
         self.text_widget.edit_modified(False)
         if isinstance(FIND_AND_REP_WIN, tk.Toplevel):
@@ -225,7 +227,8 @@ class EditMenu(tk.Menu):
 
     def add_timestamp(self, *args):
         self.text_widget.insert(tk.INSERT, datetime.now().strftime('%I:%M %p %m/%d/%Y'))
-        self.text_widget.edit_modified(False)
+        self.text_widget.edit_modified(True)
+        self.parent.title(f'*{self.parent.filename}')
 
     def find_and_replace(self, *args):
         global FIND_AND_REP_WIN
@@ -550,8 +553,9 @@ class StatusBar(ttk.Label):
 class Main(tk.Tk):
     def __init__(self, in_file=None):
         tk.Tk.__init__(self)
+        self.filename = 'Untitled.txt'
         self.geometry('1000x500')
-        self.title('Untitled.txt')
+        self.title(self.filename)
         self.protocol('WM_DELETE_WINDOW', self.close)
         # Editor
         self.editor = Editor(self)
@@ -584,8 +588,8 @@ class Main(tk.Tk):
     def general_update(self, *args):
         # Update self.file_menu.saved flag and modify self.title
         if self.editor.edit_modified():
-            filename = os.path.split(self.file_menu.filepath)[-1]
-            self.title(f'*{filename}')
+            self.filename = os.path.split(self.file_menu.filepath)[-1]
+            self.title(f'*{self.filename}')
         # Update Line and Column
         index = self.editor.index(tk.INSERT)
         index = index.split('.')
