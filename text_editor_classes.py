@@ -142,7 +142,6 @@ class FileMenu(tk.Menu):
         self._save_file()
 
     def quick_save(self, *args):
-        """Saves if file exists, calls save_as() if not"""
         if os.path.exists(self.filepath):
             self._save_file()
         else:
@@ -223,6 +222,7 @@ class EditMenu(tk.Menu):
 
     def add_timestamp(self, *args):
         self.text_widget.insert(tk.INSERT, datetime.now().strftime('%I:%M %p %m/%d/%Y'))
+        self.text_widget.edit_modified(False)
 
     def find_and_replace(self, *args):
         global FIND_AND_REP_WIN
