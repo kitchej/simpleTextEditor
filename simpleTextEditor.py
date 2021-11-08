@@ -580,7 +580,7 @@ class Main(tk.Tk):
         self.bind('<Control_L>o', self.file_menu.open_file)
         self.bind('<Control_L>s', self.file_menu.quick_save)
         self.bind('<Control_L>n', self.file_menu.new_file)
-        # Load recent files
+        # Handle file passed as command line arg
         self.in_file = in_file
         if in_file:
             self.file_menu.open_file(in_filename=self.in_file, event=None)
