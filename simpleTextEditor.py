@@ -67,13 +67,13 @@ class Editor(tk.Text):
 class FileMenu(tk.Menu):
     def __init__(self, parent, text_widget):
         tk.Menu.__init__(self, tearoff=0)
-        self.recent_files_save = 'recent_files'
-        if not os.path.exists(self.recent_files_save):
-            with open(self.recent_files_save, 'w+') as file:
+        self.recent_files_save_file = 'recent_files'
+        if not os.path.exists(self.recent_files_save_file):
+            with open(self.recent_files_save_file, 'w+') as file:
                 file.write('')
         self.parent = parent
         self.text_widget = text_widget
-        self.recent_files = self.open_recent_files()
+        self.recent_files = self.get_recent_files()
         self.filepath = 'Untitled.txt'
         self.add_command(label='Open', accelerator='Ctrl+O', command=lambda: self.open_file(event=None))
         self.recent_menu = tk.Menu(self.parent, tearoff=0)
@@ -83,12 +83,26 @@ class FileMenu(tk.Menu):
                     label=f"{os.path.split(f)[-1].strip()}",
                     command=lambda name=f.strip(): self.open_file(in_filename=name, event=None))
         self.add_cascade(label='Recent Files', menu=self.recent_menu)
-        self.add_command(label='Save', accelerator='Ctrl+S', command=self.quick_save)
+        self.add_command(label='Save', accelerator='Ctrl+S', command=self.save)
         self.add_command(label='Save as', command=self.save_as)
         self.add_command(label='New', accelerator='Ctrl+N', command=self.new_file)
 
-    def open_recent_files(self):
-        with open(self.recent_files_save, 'r') as f:
+    def _save_file(self):
+        text = self.text_widget.get(0.0, tk.END)
+        try:
+            with open(self.filepath, 'w+') as file:
+                file.write(text)
+        except PermissionError:
+            messagebox.showerror('Error', 'Permission denied!')
+            return
+        except OSError:
+            messagebox.showerror('Error', 'Could not save file!')
+            return
+        self.parent.title(os.path.split(self.filepath)[-1])
+        self.text_widget.edit_modified(False)
+
+    def get_recent_files(self):
+        with open(self.recent_files_save_file, 'r') as f:
             files = f.read()
             recent_files = []
         for file in files.split(','):
@@ -97,8 +111,8 @@ class FileMenu(tk.Menu):
             recent_files.append(file)
         return recent_files
 
-    def save_recent_files(self):
-        with open(self.recent_files_save, 'w+') as file:
+    def store_recent_files(self):
+        with open(self.recent_files_save_file, 'w+') as file:
             for f in self.recent_files:
                 file.write(f"{f},")
 
@@ -115,23 +129,13 @@ class FileMenu(tk.Menu):
                     label=f"{os.path.split(f)[-1].strip()}",
                     command=lambda name=f.strip(): self.open_file(in_filename=name, event=None))
 
-    def _save_file(self):
-        """General save method"""
-        text = self.text_widget.get(0.0, tk.END)
-        try:
-            with open(self.filepath, 'w+') as file:
-                file.write(text)
-        except PermissionError:
-            messagebox.showerror('Error', 'Permission denied!')
-            return
-        except OSError:
-            messagebox.showerror('Error', 'Could not save file!')
-            return
-        self.parent.title(os.path.split(self.filepath)[-1])
-        self.text_widget.edit_modified(False)
+    def save(self, *args):
+        if os.path.exists(self.filepath):
+            self._save_file()
+        else:
+            self.save_as()
 
     def save_as(self):
-        """Asks for filename first, then saves"""
         chosen_filepath = filedialog.asksaveasfilename(filetypes=[('All', '*'), ('.txt', '*.txt')],
                                                        initialdir=Path.home())
         if chosen_filepath == ():
@@ -144,20 +148,16 @@ class FileMenu(tk.Menu):
         self.update_recent_files()
         self._save_file()
 
-    def quick_save(self, *args):
-        if os.path.exists(self.filepath):
-            self._save_file()
-        else:
-            self.save_as()
-
     def open_file(self, event, in_filename=None):
+        # in_filename allows you to pass a filename as an argument, as opposed to getting it from filedialog
+        # if using this method outside of main, you MUST pass in_filename as a keyword arg, then
+        # event is not used, but needs to be there because
         global FIND_AND_REP_WIN, FONT_CHOOSE_WIN
         filename = os.path.split(self.filepath)[-1]
         if self.text_widget.edit_modified() == 1:
-
             answer = messagebox.askyesno('Save?', f'Would you like to save {filename} first?')
             if answer:
-                self.quick_save()
+                self.save()
         if in_filename:
             self.filepath = os.path.abspath(in_filename)
         else:
@@ -199,7 +199,7 @@ class FileMenu(tk.Menu):
             filename = os.path.split(self.filepath)[-1]
             answer = messagebox.askyesno('Save?', f'Would you like to save {filename} first?')
             if answer:
-                self.quick_save()
+                self.save()
         self.text_widget.delete(0.0, tk.END)
         self.filepath = 'Untitled.txt'
         self.parent.filename = self.filepath
@@ -578,7 +578,7 @@ class Main(tk.Tk):
         self.bind('<F5>', self.edit_menu.add_timestamp)
         self.bind('<Control_L>f', self.edit_menu.find_and_replace)
         self.bind('<Control_L>o', self.file_menu.open_file)
-        self.bind('<Control_L>s', self.file_menu.quick_save)
+        self.bind('<Control_L>s', self.file_menu.save)
         self.bind('<Control_L>n', self.file_menu.new_file)
         # Handle file passed as command line arg
         self.in_file = in_file
@@ -586,7 +586,7 @@ class Main(tk.Tk):
             self.file_menu.open_file(in_filename=self.in_file, event=None)
 
     def general_update(self, *args):
-        # Update self.file_menu.saved flag and modify self.title
+        # Update edit_modified flag in self.editor and modify self.title
         if self.editor.edit_modified():
             self.filename = os.path.split(self.file_menu.filepath)[-1]
             self.title(f'*{self.filename}')
@@ -598,14 +598,14 @@ class Main(tk.Tk):
         self.status.configure(text=f"Ln {self.status.line.get()}, Col {self.status.column.get()}")
 
     def close(self):
-        self.file_menu.save_recent_files()
+        self.file_menu.store_recent_files()
         if self.editor.edit_modified() == 0:
             self.quit()
         else:
-            name = self.file_menu.filepath.split('/')[-1]
-            answer = messagebox.askyesnocancel(title='Save?', message=f'Do you want to save {name} before quitting?')
+            answer = messagebox.askyesnocancel(title='Save?', message=f'Do you want to save {self.filename} '
+                                                                      f'before quitting?')
             if answer == 'yes':
-                self.file_menu.quick_save()
+                self.file_menu.save()
                 self.quit()
             elif answer is None:
                 return
