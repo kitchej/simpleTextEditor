@@ -3,9 +3,6 @@
 TEXT EDITOR FOR TKINTER
 Written by Joshua Kitchen - March 2021
 A basic text editor app with file, edit, format, and tool menus implemented in tkinter.
-UPDATED MAY 2021:
-- added find and replace functionality
-- various tweaks and bug fixes
 """
 
 from datetime import datetime
@@ -182,7 +179,6 @@ class FileMenu(tk.Menu):
             answer = messagebox.askyesno('Save?', f'Would you like to save {filename} first?')
             if answer:
                 self.save()
-
         chosen_filepath = filedialog.askopenfilename(filetypes=[('All', '*'), ('.txt', '*.txt')],
                                                      initialdir=Path.home())
 
@@ -430,85 +426,6 @@ class FindAndReplaceWin:
             self.found_words = get_word_indexes(self.find_entry.get(), self.text_widget)
             self.counter -= 1
             self.word_count_label.configure(text=f"{self.counter}/{len(self.found_words)}")
-            self.text_widget.tag_add('found', self.found_words[self.counter - 1][0],
-                                     self.found_words[self.counter - 1][1])
-
-
-class FindWin:
-    def __init__(self, parent, text_widget):
-        self.parent = parent
-        self.parent.title("Find")
-        self.text_widget = text_widget
-        # below is a flag that prevents next and previous methods from being called while user has activated "find_all"
-        self.find_mode = False
-        self.counter = 1
-        self.found_words = []
-        self.find_entry = ttk.Entry(self.parent)
-        self.find_button = ttk.Button(self.parent, text="Find", command=self.find)
-        self.find_all_button = ttk.Button(self.parent, text="Find all", command=self.find_all)
-        self.next = ttk.Button(self.parent, text="Next", command=self.next_instance)
-        self.prev = ttk.Button(self.parent, text="Previous", command=self.previous_instance)
-        self.word_count_label = tk.Label(self.parent, text="0/0 Instances")
-        self.whitespace1 = ttk.Label(self.parent, text="    ")
-        self.whitespace2 = ttk.Label(self.parent, text="    ")
-        self.find_entry.grid(row=0, column=0, padx=10)
-        self.find_button.grid(row=0, column=1)
-        self.find_all_button.grid(row=0, column=2)
-        self.prev.grid(row=1, column=1)
-        self.next.grid(row=1, column=2)
-        self.word_count_label.grid(row=1, column=0)
-        clear_tags('found', self.text_widget)
-
-    def find(self):
-        self.find_mode = True
-        self.found_words = get_word_indexes(self.find_entry.get(), self.text_widget)
-        clear_tags('found', self.text_widget)
-        if self.found_words:
-            self.counter = 1
-            self.word_count_label.configure(text=f"{self.counter}/{len(self.found_words)} Instances")
-            self.text_widget.tag_add('found', self.found_words[self.counter - 1][0],
-                                     self.found_words[self.counter - 1][1])
-        else:
-            self.word_count_label.configure(text="None")
-
-    def find_all(self):
-        self.find_mode = False
-        self.found_words = get_word_indexes(self.find_entry.get(), self.text_widget)
-        clear_tags('found', self.text_widget)
-        if self.found_words:
-            self.counter = 1
-            self.word_count_label.configure(text=f"{len(self.found_words)} Instances")
-            for word in self.found_words:
-                self.text_widget.tag_add('found', word[0], word[1])
-        else:
-            self.word_count_label.configure(text="None")
-
-    def next_instance(self):
-        if self.find is False:
-            return
-        if self.counter + 1 > len(self.found_words):
-            return
-        if not self.found_words:
-            return
-        clear_tags('found', self.text_widget)
-        self.found_words = get_word_indexes(self.find_entry.get(), self.text_widget)
-        self.counter += 1
-        self.word_count_label.configure(text=f"{self.counter}/{len(self.found_words)} Instances")
-        self.text_widget.tag_add('found', self.found_words[self.counter - 1][0],
-                                 self.found_words[self.counter - 1][1])
-
-    def previous_instance(self):
-        if self.find is False:
-            return
-        if self.counter == 1:
-            return
-        if not self.found_words:
-            return
-        else:
-            clear_tags('found', self.text_widget)
-            self.found_words = get_word_indexes(self.find_entry.get(), self.text_widget)
-            self.counter -= 1
-            self.word_count_label.configure(text=f"{self.counter}/{len(self.found_words)} Instances")
             self.text_widget.tag_add('found', self.found_words[self.counter - 1][0],
                                      self.found_words[self.counter - 1][1])
 
