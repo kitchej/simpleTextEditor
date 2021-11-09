@@ -75,13 +75,13 @@ class FileMenu(tk.Menu):
         self.text_widget = text_widget
         self.recent_files = self.get_recent_files()
         self.filepath = 'Untitled.txt'
-        self.add_command(label='Open', accelerator='Ctrl+O', command=lambda: self.open_file(event=None))
+        self.add_command(label='Open', accelerator='Ctrl+O', command=lambda: self.open_from_filemanager())
         self.recent_menu = tk.Menu(self.parent, tearoff=0)
         for f in self.recent_files:
             if os.path.exists(f):
                 self.recent_menu.add_command(
                     label=f"{os.path.split(f)[-1].strip()}",
-                    command=lambda name=f.strip(): self.open_file(in_filename=name, event=None))
+                    command=lambda name=f.strip(): self.open_file(name))
         self.add_cascade(label='Recent Files', menu=self.recent_menu)
         self.add_command(label='Save', accelerator='Ctrl+S', command=self.save)
         self.add_command(label='Save as', command=self.save_as)
@@ -127,7 +127,7 @@ class FileMenu(tk.Menu):
             if os.path.exists(f):
                 self.recent_menu.add_command(
                     label=f"{os.path.split(f)[-1].strip()}",
-                    command=lambda name=f.strip(): self.open_file(in_filename=name, event=None))
+                    command=lambda name=f.strip(): self.open_file(name))
 
     def save(self, *args):
         if os.path.exists(self.filepath):
@@ -148,30 +148,11 @@ class FileMenu(tk.Menu):
         self.update_recent_files()
         self._save_file()
 
-    def open_file(self, event, in_filename=None):
-        # in_filename allows you to pass a filename as an argument, as opposed to getting it from filedialog
-        # if using this method outside of main, you MUST pass in_filename as a keyword arg, then
-        # event is not used, but needs to be there because
+    def open_file(self, filepath):
         global FIND_AND_REP_WIN, FONT_CHOOSE_WIN
-        filename = os.path.split(self.filepath)[-1]
-        if self.text_widget.edit_modified() == 1:
-            answer = messagebox.askyesno('Save?', f'Would you like to save {filename} first?')
-            if answer:
-                self.save()
-        if in_filename:
-            self.filepath = os.path.abspath(in_filename)
-        else:
-            chosen_filepath = filedialog.askopenfilename(filetypes=[('All', '*'), ('.txt', '*.txt')],
-                                                         initialdir=Path.home())
-            if chosen_filepath == ():
-                return
-            else:
-                self.filepath = os.path.abspath(chosen_filepath)
-        if not os.path.exists(self.filepath):
-            messagebox.showerror('Unknown File', f'Could not find file: {filename}')
-            return
         try:
-            with open(self.filepath, 'r') as file:
+            filepath = os.path.abspath(filepath)
+            with open(filepath, 'r') as file:
                 text = file.read()
         except PermissionError:
             messagebox.showerror('Error', 'Permission denied!')
@@ -182,16 +163,37 @@ class FileMenu(tk.Menu):
         except UnicodeDecodeError:
             messagebox.showerror('Error', 'Could not open file!')
             return
-        self.text_widget.delete(0.0, tk.END)
-        self.text_widget.insert(0.0, text.strip('\n'))
-        self.parent.title(os.path.split(self.filepath)[-1])
+        filename = os.path.split(filepath)[-1]
+        self.filepath = filepath
+        self.parent.title(filename)
         self.parent.filename = filename
         self.update_recent_files()
-        self.text_widget.edit_modified(False)
         if isinstance(FIND_AND_REP_WIN, tk.Toplevel):
             FIND_AND_REP_WIN.destroy()
         if isinstance(FONT_CHOOSE_WIN, tk.Toplevel):
             FONT_CHOOSE_WIN.destroy()
+        self.text_widget.delete(0.0, tk.END)
+        self.text_widget.insert(0.0, text.strip('\n'))
+        self.text_widget.edit_modified(False)
+
+    def open_from_filemanager(self, *args):
+        filename = os.path.split(self.filepath)[-1]
+        if self.text_widget.edit_modified() == 1:
+            answer = messagebox.askyesno('Save?', f'Would you like to save {filename} first?')
+            if answer:
+                self.save()
+
+        chosen_filepath = filedialog.askopenfilename(filetypes=[('All', '*'), ('.txt', '*.txt')],
+                                                     initialdir=Path.home())
+
+        if chosen_filepath == () or chosen_filepath == '':
+            return
+
+        if not os.path.exists(chosen_filepath):
+            messagebox.showerror('Unknown File', f'Could not find file: {chosen_filepath}')
+            return
+
+        self.open_file(os.path.abspath(chosen_filepath))
 
     def new_file(self, *args):
         global FIND_AND_REP_WIN, FONT_CHOOSE_WIN
@@ -577,13 +579,13 @@ class Main(tk.Tk):
         self.bind('<Button-1>', self.general_update)
         self.bind('<F5>', self.edit_menu.add_timestamp)
         self.bind('<Control_L>f', self.edit_menu.find_and_replace)
-        self.bind('<Control_L>o', self.file_menu.open_file)
+        self.bind('<Control_L>o', self.file_menu.open_from_filemanager)
         self.bind('<Control_L>s', self.file_menu.save)
         self.bind('<Control_L>n', self.file_menu.new_file)
         # Handle file passed as command line arg
         self.in_file = in_file
         if in_file:
-            self.file_menu.open_file(in_filename=self.in_file, event=None)
+            self.file_menu.open_file(self.in_file)
 
     def general_update(self, *args):
         # Update edit_modified flag in self.editor and modify self.title
