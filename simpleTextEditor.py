@@ -87,7 +87,7 @@ class FileMenu(tk.Menu):
         self.add_command(label='Save as', command=self.save_as)
         self.add_command(label='New', accelerator='Ctrl+N', command=self.new_file)
 
-    def _save_file(self):
+    def __save_file(self):
         text = self.text_widget.get(0.0, tk.END)
         try:
             with open(self.filepath, 'w+') as file:
@@ -131,7 +131,7 @@ class FileMenu(tk.Menu):
 
     def save(self, *args):
         if os.path.exists(self.filepath):
-            self._save_file()
+            self.__save_file()
         else:
             self.save_as()
 
@@ -146,7 +146,7 @@ class FileMenu(tk.Menu):
                 os.rename(f"{os.path.split(self.filepath)[-1]}_ignore", f"{os.path.split(chosen_filepath)[-1]}_ignore")
             self.filepath = chosen_filepath
         self.update_recent_files()
-        self._save_file()
+        self.__save_file()
 
     def open_file(self, filepath):
         global FIND_AND_REP_WIN, FONT_CHOOSE_WIN
@@ -269,6 +269,7 @@ class FormatMenu(tk.Menu):
             FONT_CHOOSE_WIN.destroy()
         FONT_CHOOSE_WIN = tk.Toplevel()
         _ = FontChooser(FONT_CHOOSE_WIN, self.text_widget)
+        FONT_CHOOSE_WIN.focus_set()
 
     def change_font_size(self, text_size):
         with open(self.text_widget.settings_file, 'r') as file:
@@ -292,11 +293,9 @@ class FontChooser:
         self.parent.title("Font")
         self.parent.geometry("400x250")
         self.controller = controller
-        self.font_list = sorted(tk_font.families())
-        self.font_box = tk.Listbox(self.parent, selectmode='single', height=1100)
+        self.font_list = sorted(set(tk_font.families()))
+        self.font_box = tk.Listbox(self.parent, height=1100, takefocus=1, exportselection=0)
         for font in self.font_list:
-            if '@' in font:
-                continue
             self.font_box.insert(tk.END, font)
         self.font_box.pack(expand=True, fill=tk.BOTH)
         self.scrollbar = ttk.Scrollbar(self.font_box)
@@ -308,10 +307,17 @@ class FontChooser:
         self.confirm = ttk.Button(self.parent, text="Confirm", command=self.save_font_choice)
         self.preview.pack(expand=True, fill=tk.BOTH, pady=10)
         self.confirm.pack()
-        self.font_box.bind('<Double-Button-1>', self.change_preview_font)
+        self.font_box.bind('<ButtonRelease-1>', self.change_preview_font)
+        self.font_box.bind('<KeyRelease-Up>', self.change_preview_font)
+        self.font_box.bind('<KeyRelease-Down>', self.change_preview_font)
+        # TODO: get current font to be the default selected font
+        self.font_box.select_set(0)
+        self.font_box.activate(0)
+        self.font_box.event_generate("<<ListboxSelect>>")
+        self.font_box.focus_set()
 
-    def change_preview_font(self, *args):
-        preview_font = self.font_box.get(self.font_box.curselection())
+    def change_preview_font(self, event):
+        preview_font = self.font_box.get(tk.ACTIVE if event.type.name == 'KeyRelease' else tk.ANCHOR)
         self.preview.configure(font=(preview_font, 12))
 
     def save_font_choice(self):
@@ -575,8 +581,6 @@ class Main(tk.Tk):
         self.status = StatusBar(self)
         self.status.pack(fill=tk.X)
         # Key Bindings
-        self.bind('<Key>', self.general_update)
-        self.bind('<Button-1>', self.general_update)
         self.bind('<F5>', self.edit_menu.add_timestamp)
         self.bind('<Control_L>f', self.edit_menu.find_and_replace)
         self.bind('<Control_L>o', self.file_menu.open_from_filemanager)
@@ -586,8 +590,9 @@ class Main(tk.Tk):
         self.in_file = in_file
         if in_file:
             self.file_menu.open_file(self.in_file)
+        self.general_update()
 
-    def general_update(self, *args):
+    def general_update(self):
         # Update edit_modified flag in self.editor and modify self.title
         if self.editor.edit_modified():
             self.filename = os.path.split(self.file_menu.filepath)[-1]
@@ -598,6 +603,7 @@ class Main(tk.Tk):
         self.status.line.set(index[0])
         self.status.column.set(index[1])
         self.status.configure(text=f"Ln {self.status.line.get()}, Col {self.status.column.get()}")
+        self.after(100, self.general_update)  # runs general update every 100 milliseconds
 
     def close(self):
         self.file_menu.store_recent_files()
