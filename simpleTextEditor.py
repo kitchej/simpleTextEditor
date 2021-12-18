@@ -1,4 +1,3 @@
-
 """
 TEXT EDITOR FOR TKINTER
 Written by Joshua Kitchen - March 2021
@@ -302,7 +301,7 @@ class FontChooser:
         self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         self.scrollbar.configure(command=self.font_box.yview)
         self.font_box.configure(yscrollcommand=self.scrollbar.set)
-        self.preview = tk.Text(self.parent, width=50, height=2.5)
+        self.preview = tk.Text(self.parent, width=50, height=2.5, wrap=tk.WORD)
         self.preview.insert(0.0, "Preview text. This box is editable, feel free to type anything")
         self.confirm = ttk.Button(self.parent, text="Confirm", command=self.save_font_choice)
         self.preview.pack(expand=True, fill=tk.BOTH, pady=10)
