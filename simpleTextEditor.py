@@ -24,9 +24,9 @@ class Editor(tk.Text):
         self.settings_file = 'editor_settings'
         if not os.path.exists(self.settings_file):
             with open(self.settings_file, 'w+') as file:
-                file.write('font-family:monospace\nfont-size:12')
-            self.font = 'monospace'
-            self.font_size = 12
+                file.write('font-family:Arial\nfont-size:14')
+            self.font = 'Arial'
+            self.font_size = 14
         else:
             self.load_settings()
         self.scrollbar = ttk.Scrollbar(self.parent, command=self.yview, cursor='arrow')
@@ -39,24 +39,25 @@ class Editor(tk.Text):
             with open(self.settings_file, 'r+') as file:
                 settings = file.readlines()
                 if not settings:
-                    file.write('font-family:monospace\nfont-size:12')
-                    self.font = 'monospace'
-                    self.font_size = 12
+                    file.write('font-family:Arial\nfont-size:14')
+                    self.font = 'Arial'
+                    self.font_size = 14
                     self.configure(font=(self.font, self.font_size))
                     return
         except PermissionError:
             messagebox.showerror('Error', 'Could not open settings file')
-            self.font = 'monospace'
-            self.font_size = 12
+            self.font = 'Arial'
+            self.font_size = 14
         except OSError:
             messagebox.showerror('Error', 'Could not open settings file')
-            self.font = 'monospace'
-            self.font_size = 12
+            self.font = 'Arial'
+            self.font_size = 14
         self.font = settings[0].split(':')[1].strip('\n')
         try:
             self.font_size = int(settings[1].split(':')[1])
         except ValueError:
-            self.font_size = 12
+            self.font_size = 14
+            self.font_size = 14
         self.configure(font=(self.font, self.font_size))
 
 
@@ -113,9 +114,12 @@ class FileMenu(tk.Menu):
                 file.write(f"{f},")
 
     def update_recent_files(self):
-        if self.filepath in self.recent_files:
-            self.recent_files.remove(self.filepath)
-        self.recent_files.insert(0, self.filepath)
+        path = self.filepath
+        if os.name == 'nt':
+            path = path.replace('/', '\\')
+        if path in self.recent_files:
+            self.recent_files.remove(path)
+        self.recent_files.insert(0, path)
         if len(self.recent_files) > 5:
             self.recent_files.pop()
         self.recent_menu.delete(0, tk.END)
@@ -146,6 +150,11 @@ class FileMenu(tk.Menu):
 
     def open_file(self, filepath):
         global FIND_AND_REP_WIN, FONT_CHOOSE_WIN
+        filename = os.path.split(self.filepath)[-1]
+        if self.text_widget.edit_modified() == 1:
+            answer = messagebox.askyesno('Save?', f'Would you like to save {filename} first?')
+            if answer:
+                self.save()
         try:
             filepath = os.path.abspath(filepath)
             with open(filepath, 'r') as file:
@@ -305,11 +314,17 @@ class FontChooser:
         self.font_box.bind('<ButtonRelease-1>', self.change_preview_font)
         self.font_box.bind('<KeyRelease-Up>', self.change_preview_font)
         self.font_box.bind('<KeyRelease-Down>', self.change_preview_font)
-        # TODO: get current font to be the default selected font
-        self.font_box.select_set(0)
-        self.font_box.activate(0)
-        self.font_box.event_generate("<<ListboxSelect>>")
+        with open(self.controller.settings_file, 'r') as file:
+            current_font = file.readlines()[0].split(":")[1].strip('\n')
+        try:
+            curr_font_index = self.font_list.index(current_font)
+        except ValueError:
+            curr_font_index = 0
+        self.font_box.select_set(curr_font_index)
+        self.font_box.activate(curr_font_index)
+        self.font_box.see(curr_font_index)
         self.font_box.focus_set()
+        self.preview.configure(font=(current_font, 12))
 
     def change_preview_font(self, event):
         preview_font = self.font_box.get(tk.ACTIVE if event.type.name == 'KeyRelease' else tk.ANCHOR)
