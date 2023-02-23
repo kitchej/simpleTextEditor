@@ -29,9 +29,6 @@ class Editor(tk.Text):
             self.font_size = 14
         else:
             self.load_settings()
-        self.scrollbar = ttk.Scrollbar(self.parent, command=self.yview, cursor='arrow')
-        self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-        self.configure(yscrollcommand=self.scrollbar.set, relief=tk.FLAT)
         self.tag_configure('found', foreground='white', background='red')
 
     def load_settings(self):
@@ -295,22 +292,31 @@ class FontChooser:
     def __init__(self, parent, controller):
         self.parent = parent
         self.parent.title("Font")
-        self.parent.geometry("400x250")
+        self.parent.geometry("500x400")
+        self.parent.resizable(False, False)
         self.controller = controller
         self.font_list = sorted(set(tk_font.families()))
-        self.font_box = tk.Listbox(self.parent, height=1100, takefocus=1, exportselection=0)
+        self.font_box = tk.Listbox(self.parent, takefocus=1, exportselection=0)
         for font in self.font_list:
             self.font_box.insert(tk.END, font)
-        self.font_box.pack(expand=True, fill=tk.BOTH)
+
         self.scrollbar = ttk.Scrollbar(self.font_box)
-        self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         self.scrollbar.configure(command=self.font_box.yview)
         self.font_box.configure(yscrollcommand=self.scrollbar.set)
-        self.preview = tk.Text(self.parent, width=50, height=2.5, wrap=tk.WORD)
+
+        self.preview_frame = tk.Frame(self.parent, width=50, height=5)
+        self.preview_frame.pack_propagate(0)
+        self.preview = tk.Text(self.preview_frame, wrap=tk.WORD)
+        self.preview.pack(fill=tk.BOTH, expand=True)
         self.preview.insert(0.0, "Preview text. This box is editable, feel free to type anything")
+
         self.confirm = ttk.Button(self.parent, text="Confirm", command=self.save_font_choice)
-        self.preview.pack(expand=True, fill=tk.BOTH, pady=10)
-        self.confirm.pack()
+
+        self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        self.confirm.pack(side=tk.BOTTOM)
+        self.font_box.pack(side=tk.TOP, expand=True, fill=tk.BOTH)
+        self.preview_frame.pack(expand=True, fill=tk.BOTH, pady=10)
+
         self.font_box.bind('<ButtonRelease-1>', self.change_preview_font)
         self.font_box.bind('<KeyRelease-Up>', self.change_preview_font)
         self.font_box.bind('<KeyRelease-Down>', self.change_preview_font)
@@ -496,9 +502,20 @@ class Main(tk.Tk):
         self.geometry('1000x500')
         self.title(self.filename)
         self.protocol('WM_DELETE_WINDOW', self.close)
+        # Status Bar
+        self.status = StatusBar(self)
+        self.status.pack(side=tk.BOTTOM, fill=tk.X)
         # Editor
-        self.editor = Editor(self)
-        self.editor.pack(expand=True, fill=tk.BOTH)
+        self.editor_frame = tk.Frame(self)
+        self.editor_frame.pack_propagate(0)
+        self.editor = Editor(self.editor_frame)
+
+        self.scrollbar = ttk.Scrollbar(self, command=self.editor.yview, cursor='arrow')
+        self.editor.configure(yscrollcommand=self.scrollbar.set, relief=tk.FLAT)
+
+        self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        self.editor.pack(fill=tk.BOTH, expand=True)
+        self.editor_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         # Menu
         self.main_menu = tk.Menu(self)
         self.file_menu = FileMenu(self, self.editor)
@@ -508,9 +525,6 @@ class Main(tk.Tk):
         self.main_menu.add_cascade(menu=self.edit_menu, label='Edit')
         self.main_menu.add_cascade(menu=self.format_menu, label='Format')
         self.configure(menu=self.main_menu)
-        # Status Bar
-        self.status = StatusBar(self)
-        self.status.pack(fill=tk.X)
         # Key Bindings
         self.bind('<F5>', self.edit_menu.add_timestamp)
         self.bind('<Control_L>f', self.edit_menu.find_and_replace)
