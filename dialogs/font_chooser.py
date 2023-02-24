@@ -2,16 +2,18 @@ import tkinter as tk
 import tkinter.ttk as ttk
 from tkinter import font as tk_font
 
+import editor
+
 
 class FontChooser:
     """Simple interface for choosing a font"""
-    def __init__(self, parent, controller):
+    def __init__(self, parent, editor_obj: editor.Editor):
         self.parent = parent
         self.parent.bind("<Return>", self.save_font_choice)
         self.parent.title("Font")
         self.parent.geometry("500x400")
         self.parent.resizable(False, False)
-        self.controller = controller
+        self.editor_obj = editor_obj
         self.font_list = sorted(set(tk_font.families()))
         self.font_box = tk.Listbox(self.parent, takefocus=1, exportselection=0)
         for font in self.font_list:
@@ -22,7 +24,7 @@ class FontChooser:
         self.font_box.configure(yscrollcommand=self.scrollbar.set)
 
         self.preview_frame = tk.Frame(self.parent, width=50, height=5)
-        self.preview_frame.pack_propagate(0)
+        self.preview_frame.pack_propagate(False)
         self.preview = tk.Text(self.preview_frame, wrap=tk.WORD)
         self.preview.pack(fill=tk.BOTH, expand=True)
         self.preview.insert(0.0, "Preview text. This box is editable, feel free to type anything")
@@ -37,7 +39,7 @@ class FontChooser:
         self.font_box.bind('<ButtonRelease-1>', self.change_preview_font)
         self.font_box.bind('<KeyRelease-Up>', self.change_preview_font)
         self.font_box.bind('<KeyRelease-Down>', self.change_preview_font)
-        with open(self.controller.settings_file, 'r') as file:
+        with open(self.editor_obj.settings_file, 'r') as file:
             current_font = file.readlines()[0].split(":")[1].strip('\n')
         try:
             curr_font_index = self.font_list.index(current_font)
@@ -54,13 +56,6 @@ class FontChooser:
         self.preview.configure(font=(preview_font, 12))
 
     def save_font_choice(self, *args):
-        with open(self.controller.settings_file, 'r') as file:
-            lines = file.readlines()
-        with open(self.controller.settings_file, 'w') as file:
-            new_font = self.font_box.get(self.font_box.curselection())
-            if new_font == "":
-                return
-            lines[0] = f"font-family:{new_font}"
-            file.write(f"{lines[0]}\n{lines[1]}")
-        self.controller.load_settings()
+        self.editor_obj.font = self.font_box.get(self.font_box.curselection())
+        self.editor_obj.update_font()
         self.parent.destroy()

@@ -5,14 +5,14 @@ from tkinter import messagebox, filedialog
 
 
 class FileMenu(tk.Menu):
-    def __init__(self, parent, text_widget):
+    def __init__(self, parent):
         tk.Menu.__init__(self, tearoff=0)
-        self.recent_files_save_file = 'recent_files'
+        self.recent_files_save_file = '../.recentFiles'
         if not os.path.exists(self.recent_files_save_file):
             with open(self.recent_files_save_file, 'w+') as file:
                 file.write('')
         self.parent = parent
-        self.text_widget = text_widget
+        self.editor_obj = self.parent.editor
         self.recent_files = self.get_recent_files()
         self.filepath = 'Untitled.txt'
         self.add_command(label='Open', accelerator='Ctrl+O', command=lambda: self.open_from_filemanager())
@@ -28,7 +28,7 @@ class FileMenu(tk.Menu):
         self.add_command(label='New', accelerator='Ctrl+N', command=self.new_file)
 
     def __save_file(self):
-        text = self.text_widget.get(0.0, tk.END)
+        text = self.editor_obj.get(0.0, tk.END)
         try:
             with open(self.filepath, 'w+') as file:
                 file.write(text)
@@ -39,7 +39,7 @@ class FileMenu(tk.Menu):
             messagebox.showerror('Error', 'Could not save file!')
             return
         self.parent.title(os.path.split(self.filepath)[-1])
-        self.text_widget.edit_modified(False)
+        self.editor_obj.edit_modified(False)
 
     def get_recent_files(self):
         with open(self.recent_files_save_file, 'r') as f:
@@ -93,7 +93,7 @@ class FileMenu(tk.Menu):
 
     def open_file(self, filepath):
         filename = os.path.split(self.filepath)[-1]
-        if self.text_widget.edit_modified() == 1:
+        if self.editor_obj.edit_modified() == 1:
             answer = messagebox.askyesno('Save?', f'Would you like to save {filename} first?')
             if answer:
                 self.save()
@@ -101,15 +101,16 @@ class FileMenu(tk.Menu):
             filepath = os.path.abspath(filepath)
             with open(filepath, 'r') as file:
                 text = file.read()
-        except PermissionError:
-            messagebox.showerror('Error', 'Permission denied!')
+        except PermissionError as e:
+            messagebox.showerror('Error', f'Could not open {filepath}')
             return
-        except OSError:
-            messagebox.showerror('Error', 'Could not open file!')
+        except UnicodeDecodeError as e:
+            messagebox.showerror('Error', f'Could not open {filepath}')
             return
-        except UnicodeDecodeError:
-            messagebox.showerror('Error', 'Could not open file!')
+        except OSError as e:
+            messagebox.showerror('Error', f'Could not open {filepath}')
             return
+
         filename = os.path.split(filepath)[-1]
         self.filepath = filepath
         self.parent.title(filename)
@@ -119,13 +120,13 @@ class FileMenu(tk.Menu):
             self.parent.FIND_AND_REP_WIN.destroy()
         if isinstance(self.parent.FONT_CHOOSE_WIN, tk.Toplevel):
             self.parent.FONT_CHOOSE_WIN.destroy()
-        self.text_widget.delete(0.0, tk.END)
-        self.text_widget.insert(0.0, text.strip('\n'))
-        self.text_widget.edit_modified(False)
+        self.editor_obj.delete(0.0, tk.END)
+        self.editor_obj.insert(0.0, text.strip('\n'))
+        self.editor_obj.edit_modified(False)
 
     def open_from_filemanager(self, *args):
         filename = os.path.split(self.filepath)[-1]
-        if self.text_widget.edit_modified() == 1:
+        if self.editor_obj.edit_modified() == 1:
             answer = messagebox.askyesno('Save?', f'Would you like to save {filename} first?')
             if answer:
                 self.save()
@@ -142,16 +143,16 @@ class FileMenu(tk.Menu):
         self.open_file(os.path.abspath(chosen_filepath))
 
     def new_file(self, *args):
-        if self.text_widget.edit_modified() == 1:
+        if self.editor_obj.edit_modified() == 1:
             filename = os.path.split(self.filepath)[-1]
             answer = messagebox.askyesno('Save?', f'Would you like to save {filename} first?')
             if answer:
                 self.save()
-        self.text_widget.delete(0.0, tk.END)
+        self.editor_obj.delete(0.0, tk.END)
         self.filepath = 'Untitled.txt'
         self.parent.filename = self.filepath
         self.parent.title(self.filepath)
-        self.text_widget.edit_modified(False)
+        self.editor_obj.edit_modified(False)
         if isinstance(self.parent.FIND_AND_REP_WIN, tk.Toplevel):
             self.parent.FIND_AND_REP_WIN.destroy()
         if isinstance(self.parent.FONT_CHOOSE_WIN, tk.Toplevel):

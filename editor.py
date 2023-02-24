@@ -7,7 +7,7 @@ class Editor(tk.Text):
     def __init__(self, parent):
         tk.Text.__init__(self, wrap=tk.WORD, undo=True)
         self.parent = parent
-        self.settings_file = 'editor_settings'
+        self.settings_file = '.config'
         if not os.path.exists(self.settings_file):
             with open(self.settings_file, 'w+') as file:
                 file.write('font-family:Arial\nfont-size:14')
@@ -16,6 +16,13 @@ class Editor(tk.Text):
         else:
             self.load_settings()
         self.tag_configure('found', foreground='white', background='red')
+
+    def update_font(self):
+        self.configure(font=(self.font, self.font_size))
+
+    def update_config(self):
+        with open(self.settings_file, 'w+') as file:
+            file.write(f'font-family:{self.font}\nfont-size:{self.font_size}')
 
     def load_settings(self):
         try:
@@ -40,5 +47,4 @@ class Editor(tk.Text):
             self.font_size = int(settings[1].split(':')[1])
         except ValueError:
             self.font_size = 14
-            self.font_size = 14
-        self.configure(font=(self.font, self.font_size))
+        self.update_font()
