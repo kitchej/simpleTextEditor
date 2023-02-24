@@ -1,0 +1,66 @@
+import tkinter as tk
+import tkinter.ttk as ttk
+from tkinter import font as tk_font
+
+
+class FontChooser:
+    """Simple interface for choosing a font"""
+    def __init__(self, parent, controller):
+        self.parent = parent
+        self.parent.bind("<Return>", self.save_font_choice)
+        self.parent.title("Font")
+        self.parent.geometry("500x400")
+        self.parent.resizable(False, False)
+        self.controller = controller
+        self.font_list = sorted(set(tk_font.families()))
+        self.font_box = tk.Listbox(self.parent, takefocus=1, exportselection=0)
+        for font in self.font_list:
+            self.font_box.insert(tk.END, font)
+
+        self.scrollbar = ttk.Scrollbar(self.font_box)
+        self.scrollbar.configure(command=self.font_box.yview)
+        self.font_box.configure(yscrollcommand=self.scrollbar.set)
+
+        self.preview_frame = tk.Frame(self.parent, width=50, height=5)
+        self.preview_frame.pack_propagate(0)
+        self.preview = tk.Text(self.preview_frame, wrap=tk.WORD)
+        self.preview.pack(fill=tk.BOTH, expand=True)
+        self.preview.insert(0.0, "Preview text. This box is editable, feel free to type anything")
+
+        self.confirm = ttk.Button(self.parent, text="Confirm", command=self.save_font_choice)
+
+        self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        self.confirm.pack(side=tk.BOTTOM)
+        self.font_box.pack(side=tk.TOP, expand=True, fill=tk.BOTH)
+        self.preview_frame.pack(expand=True, fill=tk.BOTH, pady=10)
+
+        self.font_box.bind('<ButtonRelease-1>', self.change_preview_font)
+        self.font_box.bind('<KeyRelease-Up>', self.change_preview_font)
+        self.font_box.bind('<KeyRelease-Down>', self.change_preview_font)
+        with open(self.controller.settings_file, 'r') as file:
+            current_font = file.readlines()[0].split(":")[1].strip('\n')
+        try:
+            curr_font_index = self.font_list.index(current_font)
+        except ValueError:
+            curr_font_index = 0
+        self.font_box.select_set(curr_font_index)
+        self.font_box.activate(curr_font_index)
+        self.font_box.see(curr_font_index)
+        self.font_box.focus_set()
+        self.preview.configure(font=(current_font, 12))
+
+    def change_preview_font(self, event):
+        preview_font = self.font_box.get(tk.ACTIVE if event.type.name == 'KeyRelease' else tk.ANCHOR)
+        self.preview.configure(font=(preview_font, 12))
+
+    def save_font_choice(self, *args):
+        with open(self.controller.settings_file, 'r') as file:
+            lines = file.readlines()
+        with open(self.controller.settings_file, 'w') as file:
+            new_font = self.font_box.get(self.font_box.curselection())
+            if new_font == "":
+                return
+            lines[0] = f"font-family:{new_font}"
+            file.write(f"{lines[0]}\n{lines[1]}")
+        self.controller.load_settings()
+        self.parent.destroy()
