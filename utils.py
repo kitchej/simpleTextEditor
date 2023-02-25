@@ -1,11 +1,12 @@
 import tkinter as tk
 
 
-def get_word_indexes(word, text_widget, start=1.0):
+def get_word_indexes(word, text_widget, match_word=False, start=1.0):
     """
     A helper function that finds the start and end indexes of every instance of a word within a text widget
     """
     out = []
+    end_of_text = text_widget.index(tk.END)
     while start != text_widget.index(tk.END):
         word_start = text_widget.search(word, start, stopindex=tk.END)
         if word_start == '':
@@ -14,7 +15,10 @@ def get_word_indexes(word, text_widget, start=1.0):
         column = index[0]
         row = index[1]
         new_row = int(row) + len(word)
-        word_end = f"{column}.{new_row}"
+        if match_word:
+            pass
+        else:
+            word_end = f"{column}.{new_row}"
         start = word_end
         out.append((word_start, word_end))
     return out
