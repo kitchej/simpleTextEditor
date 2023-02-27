@@ -1,6 +1,6 @@
 """
 TEXT EDITOR FOR TKINTER
-Written by Joshua Kitchen - March 2021
+Written by Joshua Kitchen - March 2021, revised February 2023
 A basic text editor app with file, edit, format, and tool menus implemented in tkinter.
 """
 

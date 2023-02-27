@@ -28,7 +28,7 @@ class FindAndReplaceWin:
         self.match_case_check = ttk.Checkbutton(self.parent, variable=self.match_case)
         self.match_case_check.state(['!alternate'])
         self.match_word_label = ttk.Label(self.parent, text="Match Word")
-        self.match_word_check = ttk.Checkbutton(self.parent, variable=self.match_word)
+        self.match_word_check = ttk.Checkbutton(self.parent, variable=self.match_word, command=self.activate_match_word)
         self.match_word_check.state(['!alternate'])
         self.replace_entry = ttk.Entry(self.parent, width=25)
         self.replace_button = ttk.Button(self.parent, text="Replace", command=self.replace)
@@ -56,33 +56,21 @@ class FindAndReplaceWin:
         pass
 
     def activate_match_word(self):
-        pass
-
-    def find_words_only(self):
-        front_char = None
-        back_char = None
-        for word in self.found_words:
-            print(word)
-            if word[0] == '1.0':
-                front_char = None
-                back_char = None
-            elif word[1] == self.editor_obj.index(tk.END):
-                front_char = None
-                back_char = None
-            elif word[0] == '1.0' and word[1] == self.editor_obj.index(str(int(tk.END) - 1)):
-                front_char = None
-                back_char = None
-
+        if self.find_all is None:
+            return
+        if self.is_find_all:
+            self.find_all()
+        else:
+            self.find()
 
     def find_words(self):
         word = self.find_entry.get()
         if word == '':
             return
         if self.match_word.get():
-            word = word.strip(" ")
-            word = f" {word} "
-        self.found_words = get_word_indexes(word, self.editor_obj)
-        self.find_words_only()
+            self.found_words = get_word_indexes(word, self.editor_obj, match_word=True)
+        else:
+            self.found_words = get_word_indexes(word, self.editor_obj)
         clear_tags('found', self.editor_obj)
         if self.found_words:
             self.word_counter = 1
