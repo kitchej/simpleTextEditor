@@ -74,7 +74,7 @@ class FindAndReplaceWin:
         clear_tags('found', self.editor_obj)
         if self.found_words:
             self.word_counter = 1
-            if self.find_all:
+            if self.is_find_all:
                 for word in self.found_words:
                     self.editor_obj.tag_add('found', word[0], word[1])
                 self.word_count_label.configure(text=f"Total: {len(self.found_words)}")
@@ -87,20 +87,20 @@ class FindAndReplaceWin:
 
     def find(self):
         if self.is_find_all or self.is_find_all is None:
+            self.is_find_all = False
             self.word_count_label.pack_forget()
             self.prev.pack(side=tk.LEFT)
             self.word_count_label.pack(side=tk.LEFT, padx=5)
             self.next.pack(side=tk.LEFT)
-        self.is_find_all = False
         self.find_words()
 
     def find_all(self):
         if not self.is_find_all or self.is_find_all is None:
+            self.is_find_all = True
             self.word_count_label.pack_forget()
             self.prev.pack_forget()
             self.next.pack_forget()
             self.word_count_label.pack(padx=45)
-        self.is_find_all = True
         self.find_words()
 
     def replace(self):
@@ -109,7 +109,10 @@ class FindAndReplaceWin:
         word = self.found_words.pop(self.word_counter - 1)
         self.editor_obj.delete(word[0], word[1])
         self.editor_obj.insert(word[0], self.replace_entry.get())
-        self.found_words = get_word_indexes(self.find_entry.get(), self.editor_obj)
+        if self.match_word:
+            self.found_words = get_word_indexes(self.find_entry.get(), self.editor_obj, match_word=True)
+        else:
+            self.found_words = get_word_indexes(self.find_entry.get(), self.editor_obj)
         if not self.found_words:
             self.word_count_label.configure(text="None")
             return
@@ -121,10 +124,19 @@ class FindAndReplaceWin:
         if not self.found_words:
             return
         clear_tags('found', self.editor_obj)
+        start = '1.0'
         for i in range(len(self.found_words)):
-            next_word = get_word_indexes(self.find_entry.get(), self.editor_obj)[0]
+            if self.match_word:
+                self.found_words = get_word_indexes(self.find_entry.get(), self.editor_obj, start=start,
+                                                    match_word=True)
+            else:
+                self.found_words = get_word_indexes(self.find_entry.get(), self.editor_obj, start=start)
+            if not self.found_words:
+                return
+            next_word = self.found_words[0]
             self.editor_obj.delete(next_word[0], next_word[1])
             self.editor_obj.insert(next_word[0], self.replace_entry.get())
+            start = next_word[1]
         self.found_words = []
         self.word_count_label.configure(text=f"{self.word_counter}/{len(self.found_words)}")
 
@@ -134,7 +146,6 @@ class FindAndReplaceWin:
         if not self.found_words:
             return
         clear_tags('found', self.editor_obj)
-        # self.found_words = get_word_indexes(self.find_entry.get(), self.editor_obj)
         self.word_counter += 1
         self.word_count_label.configure(text=f"{self.word_counter}/{len(self.found_words)}")
         self.editor_obj.tag_add('found', self.found_words[self.word_counter - 1][0],
@@ -148,7 +159,6 @@ class FindAndReplaceWin:
             return
         else:
             clear_tags('found', self.editor_obj)
-            # self.found_words = get_word_indexes(self.find_entry.get(), self.editor_obj)
             self.word_counter -= 1
             self.word_count_label.configure(text=f"{self.word_counter}/{len(self.found_words)}")
             self.editor_obj.tag_add('found', self.found_words[self.word_counter - 1][0],

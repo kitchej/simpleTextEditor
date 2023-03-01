@@ -6,7 +6,7 @@ def get_word_indexes(word, text_widget, match_word=False, start=1.0):
     A helper function that finds the start and end indexes of every instance of a word within a text widget
     """
     punctuation = [' ', ',', '.', '!', '?', ':', ';', '"', '\'', '\\', '/', '<', '>', '`', '~', '@', '#', '$', '%',
-                   '&', '*', '(', ')']
+                   '&', '*', '(', ')', '{', '}', '[', ']', '+', '=', '-', '|', '~', '`']
     out = []
 
     # tkinter puts a new line at the end of text in a textbox, so we will need to account for that
