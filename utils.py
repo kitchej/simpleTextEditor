@@ -1,10 +1,15 @@
 import tkinter as tk
 
 
-def get_word_indexes(word, text_widget, match_word=False, start=1.0):
+def get_word_indexes(word, text_widget, match_word=0, match_case=0, start=1.0):
     """
     A helper function that finds the start and end indexes of every instance of a word within a text widget
     """
+    # we need to reverse the match_word boolean because tk.Text.search() expects a 1 to activate a no-case search
+    if match_case == 1:
+        match_case = 0
+    else:
+        match_case = 1
     punctuation = [' ', ',', '.', '!', '?', ':', ';', '"', '\'', '\\', '/', '<', '>', '`', '~', '@', '#', '$', '%',
                    '&', '*', '(', ')', '{', '}', '[', ']', '+', '=', '-', '|', '~', '`']
     out = []
@@ -13,7 +18,7 @@ def get_word_indexes(word, text_widget, match_word=False, start=1.0):
     text_end_column = int(text_widget.index("end - 1c").split('.')[1])
 
     while start != text_widget.index(tk.END):
-        word_start = text_widget.search(word, start, stopindex=tk.END)
+        word_start = text_widget.search(word, start, stopindex=tk.END, nocase=match_case)
         if word_start == '':
             break
         word_start_index = word_start.split(".")
@@ -23,7 +28,7 @@ def get_word_indexes(word, text_widget, match_word=False, start=1.0):
         word_end = f"{start_row}.{end_column}"
         start = word_end
 
-        if match_word:
+        if match_word == 1:
             if word_start == '1.0':
                 # Just check the right side of the word
                 characters = text_widget.get(word_start, f"{start_row}.{end_column + 1}")

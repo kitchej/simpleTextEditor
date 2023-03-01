@@ -1,6 +1,6 @@
 import tkinter as tk
 import tkinter.ttk as ttk
-import re
+
 
 import editor
 from utils import get_word_indexes, clear_tags
@@ -25,10 +25,10 @@ class FindAndReplaceWin:
         self.find_button = ttk.Button(self.parent, text="Find", command=self.find)
         self.find_all_button = ttk.Button(self.parent, text="Find All", command=self.find_all)
         self.match_case_label = ttk.Label(self.parent, text="Match Case")
-        self.match_case_check = ttk.Checkbutton(self.parent, variable=self.match_case)
+        self.match_case_check = ttk.Checkbutton(self.parent, variable=self.match_case, command=self.refresh_found_words)
         self.match_case_check.state(['!alternate'])
         self.match_word_label = ttk.Label(self.parent, text="Match Word")
-        self.match_word_check = ttk.Checkbutton(self.parent, variable=self.match_word, command=self.activate_match_word)
+        self.match_word_check = ttk.Checkbutton(self.parent, variable=self.match_word, command=self.refresh_found_words)
         self.match_word_check.state(['!alternate'])
         self.replace_entry = ttk.Entry(self.parent, width=25)
         self.replace_button = ttk.Button(self.parent, text="Replace", command=self.replace)
@@ -52,10 +52,7 @@ class FindAndReplaceWin:
 
         clear_tags('found', self.editor_obj)
 
-    def activate_match_case(self):
-        pass
-
-    def activate_match_word(self):
+    def refresh_found_words(self):
         if self.find_all is None:
             return
         if self.is_find_all:
@@ -67,10 +64,9 @@ class FindAndReplaceWin:
         word = self.find_entry.get()
         if word == '':
             return
-        if self.match_word.get():
-            self.found_words = get_word_indexes(word, self.editor_obj, match_word=True)
-        else:
-            self.found_words = get_word_indexes(word, self.editor_obj)
+
+        self.found_words = get_word_indexes(word, self.editor_obj, match_word=self.match_word.get(),
+                                            match_case=self.match_case.get())
         clear_tags('found', self.editor_obj)
         if self.found_words:
             self.word_counter = 1
@@ -109,10 +105,9 @@ class FindAndReplaceWin:
         word = self.found_words.pop(self.word_counter - 1)
         self.editor_obj.delete(word[0], word[1])
         self.editor_obj.insert(word[0], self.replace_entry.get())
-        if self.match_word:
-            self.found_words = get_word_indexes(self.find_entry.get(), self.editor_obj, match_word=True)
-        else:
-            self.found_words = get_word_indexes(self.find_entry.get(), self.editor_obj)
+
+        self.found_words = get_word_indexes(self.find_entry.get(), self.editor_obj, match_word=self.match_word.get(),
+                                            match_case=self.match_case.get())
         if not self.found_words:
             self.word_count_label.configure(text="None")
             return
@@ -126,11 +121,10 @@ class FindAndReplaceWin:
         clear_tags('found', self.editor_obj)
         start = '1.0'
         for i in range(len(self.found_words)):
-            if self.match_word:
-                self.found_words = get_word_indexes(self.find_entry.get(), self.editor_obj, start=start,
-                                                    match_word=True)
-            else:
-                self.found_words = get_word_indexes(self.find_entry.get(), self.editor_obj, start=start)
+            self.found_words = get_word_indexes(self.find_entry.get(), self.editor_obj,
+                                                match_word=self.match_word.get(),
+                                                match_case=self.match_case.get(),
+                                                start=start)
             if not self.found_words:
                 return
             next_word = self.found_words[0]
