@@ -3,6 +3,8 @@ from pathlib import Path
 import tkinter as tk
 from tkinter import messagebox, filedialog
 
+from syntax_highlighting.python import PythonSyntaxHighlighter
+
 
 class FileMenu(tk.Menu):
     def __init__(self, parent):
@@ -26,6 +28,8 @@ class FileMenu(tk.Menu):
         self.add_command(label='Save', accelerator='Ctrl+S', command=self.save)
         self.add_command(label='Save as', command=self.save_as)
         self.add_command(label='New', accelerator='Ctrl+N', command=self.new_file)
+
+        self.syntax_highlighters = {"py": PythonSyntaxHighlighter(self.editor_obj)}
 
     def __save_file(self):
         text = self.editor_obj.get(0.0, tk.END)
@@ -111,7 +115,16 @@ class FileMenu(tk.Menu):
             messagebox.showerror('Error', f'Could not open {filepath}')
             return
 
+        # Configure syntax highlighting
         filename = os.path.split(filepath)[-1]
+        extension = filename.split('.')
+        if len(extension) > 1:
+            extension = extension[-1]
+        try:
+            self.parent.syntax_highlighter = self.syntax_highlighters[extension]
+        except KeyError:
+            self.parent.syntax_highlighter = None
+
         self.filepath = filepath
         self.parent.title(filename)
         self.parent.filename = filename
@@ -123,6 +136,7 @@ class FileMenu(tk.Menu):
         self.editor_obj.delete(0.0, tk.END)
         self.editor_obj.insert(0.0, text.strip('\n'))
         self.editor_obj.edit_modified(False)
+        self.parent.update_syntax_highlighting()
 
     def open_from_filemanager(self, *args):
         filename = os.path.split(self.filepath)[-1]

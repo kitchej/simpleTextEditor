@@ -10,6 +10,7 @@ import tkinter as tk
 import tkinter.ttk as ttk
 from tkinter import messagebox
 
+import utils
 from editor import Editor
 from menus.file_menu import FileMenu
 from menus.edit_menu import EditMenu
@@ -23,6 +24,7 @@ class Main(tk.Tk):
 
         self.FIND_AND_REP_WIN = None
         self.FONT_CHOOSE_WIN = None
+        self.syntax_highlighter = None
 
         self.filename = 'Untitled.txt'
         self.geometry('1000x500')
@@ -57,11 +59,19 @@ class Main(tk.Tk):
         self.bind('<Control_L>o', self.file_menu.open_from_filemanager)
         self.bind('<Control_L>s', self.file_menu.save)
         self.bind('<Control_L>n', self.file_menu.new_file)
+        self.bind("<Key>", self.update_syntax_highlighting)
 
         self.in_file = in_file
         if in_file:
             self.file_menu.open_file(self.in_file)
         self.update_gui()
+
+    def update_syntax_highlighting(self, *args):
+        if self.syntax_highlighter is not None:
+            for tag in self.syntax_highlighter.tag_names:
+                utils.clear_tags(tag, self.editor)
+            self.syntax_highlighter.highlight_syntax()
+            self.update_idletasks()
 
     def update_gui(self):
         if self.editor.edit_modified():
