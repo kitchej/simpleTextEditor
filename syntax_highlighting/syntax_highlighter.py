@@ -27,7 +27,7 @@ class SyntaxHighlighter(ABC):
         self.text_obj.tag_configure("comment", foreground=self.comment_color)
         self.text_obj.tag_configure("func_names", foreground=self.func_name_color)
         self.tag_names = ["keywords", "strings", "type_names", "comment", "func_names"]
-        self.regex_patterns = []
+        self.regex_patterns = {}
 
     def highlight_keywords(self):
         for keyword in self.keywords:
@@ -42,14 +42,37 @@ class SyntaxHighlighter(ABC):
                 self.text_obj.tag_add("type_names", index[0], index[1])
 
     def highlight_strings(self):
-        indexes = utils.get_word_indexes(self.string_regex, self.text_obj, regex=True)
-        for index in indexes:
-            self.text_obj.tag_add("strings", index[0], index[1])
+        # indexes = utils.get_word_indexes(self.string_regex, self.text_obj, regex=True)
+        # for index in indexes:
+        #     self.text_obj.tag_add("strings", index[0], index[1])
+        length = tk.IntVar()
+        text = self.text_obj.get(0.0, tk.END)
+        matches = re.findall(self.string_regex, text)
+        for match in matches:
+            start = self.text_obj.search(match, '1.0', count=length)
+            word_start_index = start.split(".")
+            start_row = int(word_start_index[0])
+            start_column = int(word_start_index[1])
+            end_column = start_column + length.get()
+            word_end = f"{start_row}.{end_column}"
+            self.text_obj.tag_add("strings", start, word_end)
 
     def highlight_comments(self):
-        indexes = utils.get_word_indexes(self.comment_regex, self.text_obj, regex=True)
-        for index in indexes:
-            self.text_obj.tag_add("comment", index[0], index[1])
+        # indexes = utils.get_word_indexes(self.comment_regex, self.text_obj, regex=True)
+        # for index in indexes:
+        #     self.text_obj.tag_add("comment", index[0], index[1])
+
+        length = tk.IntVar()
+        text = self.text_obj.get(0.0, tk.END)
+        matches = re.findall(self.func_name_regex, text)
+        for match in matches:
+            start = self.text_obj.search(match, '1.0', count=length)
+            word_start_index = start.split(".")
+            start_row = int(word_start_index[0])
+            start_column = int(word_start_index[1])
+            end_column = start_column + length.get()
+            word_end = f"{start_row}.{end_column}"
+            self.text_obj.tag_add("func_names", start, word_end)
 
     def highlight_func_names(self):
         indexes = utils.get_word_indexes(self.func_name_regex, self.text_obj, regex=True)
@@ -67,13 +90,6 @@ class SyntaxHighlighter(ABC):
         self.highlight_func_names()
         self.highlight_comments()
         self.highlight_other()
-
-    # def highlight_text(self, tag, start, end):
-    #     self.text_obj.tag_add(tag, start, end)
-    #
-    # def highlight_syntax(self):
-    #     self.text = self.text_obj.get(0.0, tk.END)
-    #     for pattern in self.regex_patterns:
 
 
 
