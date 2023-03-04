@@ -68,7 +68,7 @@ class Main(tk.Tk):
 
     def update_syntax_highlighting(self, *args):
         if self.syntax_highlighter is not None:
-            for tag in self.syntax_highlighter.tag_names:
+            for tag in self.syntax_highlighter.get_tag_names():
                 utils.clear_tags(tag, self.editor)
             self.syntax_highlighter.highlight_syntax()
             self.update_idletasks()

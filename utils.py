@@ -4,9 +4,6 @@ import tkinter as tk
 def get_word_indexes(word, text_widget, regex=False, no_case=False, start="1.0"):
     """
     A helper function that finds the start and end indexes of every instance of a word within a text widget
-
-    match_case is a boolean, but it needs to be 1 or 0 to allow for the value of a
-    tk.IntVar to be passed directly to it (to help make code a little simpler in calling code)
     """
     length = tk.IntVar()
     out = []
@@ -17,8 +14,9 @@ def get_word_indexes(word, text_widget, regex=False, no_case=False, start="1.0")
         word_start_index = word_start.split(".")
         start_row = int(word_start_index[0])
         start_column = int(word_start_index[1])
+        end_row = start_row + word.count('\n')
         end_column = start_column + length.get()
-        word_end = f"{start_row}.{end_column}"
+        word_end = f"{end_row}.{end_column}"
         start = word_end
         out.append((word_start, word_end))
     return out
