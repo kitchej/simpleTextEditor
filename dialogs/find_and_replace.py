@@ -117,6 +117,7 @@ class FindAndReplaceWin:
             self.editor_obj.tag_add('found', self.found_word_indexes[self.word_counter - 1][0],
                                     self.found_word_indexes[self.word_counter - 1][1])
             self.word_count_label.configure(text=f"{self.word_counter}/{len(self.found_word_indexes)}")
+            self.editor_obj.see(self.found_word_indexes[0][0])
 
     def find_all(self):
         if not self.is_find_all or self.is_find_all is None:
