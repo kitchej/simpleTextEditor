@@ -1,15 +1,15 @@
 """
-Syntax Highlighter for Simple Text Editor
+Syntax Highlighter for tkEdit
 Written by Joshua Kitchen - March 2023
 
 Abstract base class for creating custom syntax highlighters
 See syntax_highlighting/python.py for an example implementation
 
-NOTE: While Tkinter has it's own regex engine (it uses TCL's regex engine), I choose to go with the Python's regex
-engine because it's a little more sophisticated that one provided by Tkinter. If you don't want to use Python's regex
-engine, you can always override the highlight_pattern() method to use whatever regex engine you want. If you're dead set
-on using Tkinter's regex engine, utils.get_string_indexes() supports TCL's regex engine. Just set the 'regex' option to
-True.
+NOTE: While Tkinter has it's own regex engine (it uses TCL's regex engine), I chose to go with the Python's regex
+engine because it's a little more sophisticated than the one provided by Tkinter. If you don't want to use Python's
+regex engine, you can always override the highlight_pattern() method to use whatever regex engine you want. If you're
+dead set on using Tkinter's regex engine, utils.get_string_indexes() supports TCL's regex engine. Just set the
+'regex' option to True.
 """
 
 
@@ -35,7 +35,10 @@ class SyntaxHighlighter(ABC):
     def add_tag(self, tag_name: str, color: str):
         '''
         Interface for adding a tag from the editor
-        Note that conflicting tag names will overwrite each other
+        NOTE: In Tkinter, tags have a stack order. Tags added last will show up over tags added earlier
+        if you want to customize this order, use self._text_obj.tag_lower(tagName, belowThis=None) and
+        self._text_obj.tag_raise(tagName, aboveThis=None)
+
         '''
         self._text_obj.tag_configure(tag_name, foreground=color)
         self._tag_names.append(tag_name)

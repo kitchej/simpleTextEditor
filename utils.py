@@ -51,3 +51,16 @@ def clear_tags(tag, text_widget):
         old_tags.append((tag, str(start), str(stop)))
     for old_tag in old_tags:
         text_widget.tag_remove(old_tag[0], old_tag[1], old_tag[2])
+
+
+def get_tags(start, end, text_obj):
+    """
+    Provided by Bryan Oakley
+    https://stackoverflow.com/questions/61661490/how-do-you-get-the-tags-from-text-in-a-tkinter-text-widget
+    """
+    index = start
+    tags = []
+    while text_obj.compare(index, "<=", end):
+        tags.extend((text_obj.tag_names(index)))
+        index = text_obj.index(f"{index}+1c")
+    return set(tags)

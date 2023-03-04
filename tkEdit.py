@@ -26,9 +26,7 @@ class Main(tk.Tk):
         self.FIND_AND_REP_WIN = None
         self.FONT_CHOOSE_WIN = None
 
-        self.filename = 'Untitled.txt'
         self.geometry('1000x500')
-        self.title(self.filename)
         self.protocol('WM_DELETE_WINDOW', self.close)
 
         self.editor_frame = tk.Frame(self)
@@ -67,6 +65,7 @@ class Main(tk.Tk):
         self.in_file = in_file
         if in_file:
             self.file_menu.open_file(self.in_file)
+        self.title(self.file_menu.filename)
         self.update_gui()
 
     def set_syntax_highlighter(self, extension):

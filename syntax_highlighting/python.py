@@ -1,6 +1,7 @@
 from syntax_highlighting.syntax_highlighter import SyntaxHighlighter
 import editor
 import re
+import utils
 
 
 class PythonSyntaxHighlighter(SyntaxHighlighter):
@@ -20,12 +21,13 @@ class PythonSyntaxHighlighter(SyntaxHighlighter):
         self.multiline_comment_regex = re.compile(r"[\"\']{3}.*?[\"\']{3}", re.DOTALL)
         self.func_name_regex = re.compile(r"(?<=def).*(?=\()")
 
+        # Tags added
         self.add_tag("keywords", "#cc7a00")
         self.add_tag("bultins", "#0099ff")
-        self.add_tag("strings", "#009900")
-        self.add_tag("func_names", "#0033cc")
-        self.add_tag("comments", "#808080")
         self.add_tag("self", "#b300b3")
+        self.add_tag("func_names", "#0033cc")
+        self.add_tag("strings", "#009900")
+        self.add_tag("comments", "#808080")
 
     def highlight_syntax(self):
         self._text = self._text_obj.get(0.0, "end")
@@ -38,3 +40,4 @@ class PythonSyntaxHighlighter(SyntaxHighlighter):
         self.highlight_pattern(self.func_name_regex, "func_names")
         self.highlight_pattern(self.one_line_comment_regex, "comments")
         self.highlight_pattern(self.multiline_comment_regex, "strings")
+        print(utils.get_tags("48.42", "48.75", self._text_obj))

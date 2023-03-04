@@ -7,7 +7,7 @@ from tkinter import messagebox, filedialog
 class FileMenu(tk.Menu):
     def __init__(self, parent):
         tk.Menu.__init__(self, tearoff=0)
-        self.recent_files_save_file = '../.recentFiles'
+        self.recent_files_save_file = '.recentFiles'
         if not os.path.exists(self.recent_files_save_file):
             with open(self.recent_files_save_file, 'w+') as file:
                 file.write('')
@@ -15,6 +15,7 @@ class FileMenu(tk.Menu):
         self.editor_obj = self.parent.editor
         self.recent_files = self.get_recent_files()
         self.filepath = 'Untitled.txt'
+        self.filename = 'Untitled.txt'
         self.add_command(label='Open', accelerator='Ctrl+O', command=lambda: self.open_from_filemanager())
         self.recent_menu = tk.Menu(self.parent, tearoff=0)
         for f in self.recent_files:
@@ -27,9 +28,8 @@ class FileMenu(tk.Menu):
         self.add_command(label='Save as', command=self.save_as)
         self.add_command(label='New', accelerator='Ctrl+N', command=self.new_file)
 
-    def _config_syntax_highlighter(self, filename):
-        filename = os.path.split(filename)[-1]
-        extension = filename.split('.')
+    def _config_syntax_highlighter(self):
+        extension = self.filename.split('.')
         if len(extension) > 1:
             self.parent.set_syntax_highlighter(extension[-1])
         else:
@@ -42,10 +42,10 @@ class FileMenu(tk.Menu):
             with open(self.filepath, 'w+') as file:
                 file.write(text)
         except PermissionError:
-            messagebox.showerror('Error', 'Permission denied!')
+            messagebox.showerror('Error', f'Could not save {self.filepath}')
             return
         except OSError:
-            messagebox.showerror('Error', 'Could not save file!')
+            messagebox.showerror('Error', f'Could not save {self.filepath}')
             return
         self.parent.title(os.path.split(self.filepath)[-1])
         self.editor_obj.edit_modified(False)
@@ -66,20 +66,17 @@ class FileMenu(tk.Menu):
                 file.write(f"{f},")
 
     def update_recent_files(self):
-        path = self.filepath
-        if os.name == 'nt':
-            path = path.replace('/', '\\')
-        if path in self.recent_files:
-            self.recent_files.remove(path)
-        self.recent_files.insert(0, path)
+        if self.filepath in self.recent_files:
+            self.recent_files.remove(self.filepath)
+        self.recent_files.insert(0, self.filepath)
         if len(self.recent_files) > 5:
             self.recent_files.pop()
         self.recent_menu.delete(0, tk.END)
-        for f in self.recent_files:
-            if os.path.exists(f):
+        for path in self.recent_files:
+            if os.path.exists(path):
                 self.recent_menu.add_command(
-                    label=f"{os.path.split(f)[-1].strip()}",
-                    command=lambda name=f.strip(): self.open_file(name))
+                    label=f"{path}",
+                    command=lambda name=path.strip(): self.open_file(name))
 
     def save(self, *args):
         if os.path.exists(self.filepath):
@@ -95,9 +92,10 @@ class FileMenu(tk.Menu):
             return
         else:
             self.filepath = chosen_filepath
+            self.filename = os.path.split(os.path.split(chosen_filepath)[-1])
         self.update_recent_files()
         self._save_file()
-        self._config_syntax_highlighter(os.path.split(self.filepath)[-1])
+        self._config_syntax_highlighter()
 
     def open_file(self, filepath):
         filename = os.path.split(self.filepath)[-1]
@@ -109,20 +107,19 @@ class FileMenu(tk.Menu):
             filepath = os.path.abspath(filepath)
             with open(filepath, 'r') as file:
                 text = file.read()
-        except PermissionError as e:
+        except PermissionError:
             messagebox.showerror('Error', f'Could not open {filepath}')
             return
-        except UnicodeDecodeError as e:
+        except UnicodeDecodeError:
             messagebox.showerror('Error', f'Could not open {filepath}')
             return
-        except OSError as e:
+        except OSError:
             messagebox.showerror('Error', f'Could not open {filepath}')
             return
 
-        filename = os.path.split(filepath)[-1]
+        self.filename = os.path.split(filepath)[-1]
         self.filepath = filepath
-        self.parent.title(filename)
-        self.parent.filename = filename
+        self.parent.title(self.filename)
         self.update_recent_files()
         if isinstance(self.parent.FIND_AND_REP_WIN, tk.Toplevel):
             self.parent.FIND_AND_REP_WIN.destroy()
@@ -131,7 +128,7 @@ class FileMenu(tk.Menu):
         self.editor_obj.delete(0.0, tk.END)
         self.editor_obj.insert(0.0, text.strip('\n'))
         self.editor_obj.edit_modified(False)
-        self._config_syntax_highlighter(filename)
+        self._config_syntax_highlighter()
 
     def open_from_filemanager(self, *args):
         filename = os.path.split(self.filepath)[-1]
