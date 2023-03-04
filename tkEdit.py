@@ -1,7 +1,7 @@
 """
 TEXT EDITOR FOR TKINTER
-Written by Joshua Kitchen - March 2021, revised February 2023
-A basic text editor app with file, edit, format, and tool menus implemented in tkinter.
+Written by Joshua Kitchen - March 2021, revised March 2023
+A text editor app implemented in Tkinter.
 """
 
 import os
@@ -16,6 +16,7 @@ from menus.file_menu import FileMenu
 from menus.edit_menu import EditMenu
 from menus.format_menu import FormatMenu
 from status_bar import StatusBar
+from syntax_highlighting.python import PythonSyntaxHighlighter
 
 
 class Main(tk.Tk):
@@ -24,7 +25,6 @@ class Main(tk.Tk):
 
         self.FIND_AND_REP_WIN = None
         self.FONT_CHOOSE_WIN = None
-        self.syntax_highlighter = None
 
         self.filename = 'Untitled.txt'
         self.geometry('1000x500')
@@ -61,16 +61,25 @@ class Main(tk.Tk):
         self.bind('<Control_L>n', self.file_menu.new_file)
         self.bind("<Key>", self.update_syntax_highlighting)
 
+        self._syntax_highlighter = None
+        self._syntax_highlighters = {"py": PythonSyntaxHighlighter(self.editor)}
+
         self.in_file = in_file
         if in_file:
             self.file_menu.open_file(self.in_file)
         self.update_gui()
 
+    def set_syntax_highlighter(self, extension):
+        try:
+            self._syntax_highlighter = self._syntax_highlighters[extension]
+        except KeyError:
+            self._syntax_highlighter = None
+
     def update_syntax_highlighting(self, *args):
-        if self.syntax_highlighter is not None:
-            for tag in self.syntax_highlighter.get_tag_names():
+        if self._syntax_highlighter is not None:
+            for tag in self._syntax_highlighter.get_tag_names():
                 utils.clear_tags(tag, self.editor)
-            self.syntax_highlighter.highlight_syntax()
+            self._syntax_highlighter.highlight_syntax()
             self.update_idletasks()
 
     def update_gui(self):
@@ -106,7 +115,7 @@ class Main(tk.Tk):
 def main():
     args = sys.argv
     if len(args) > 2:
-        print("Usage: simpleTextEditor.py [filepath]")
+        print("Usage: tkEdit.py [filepath]")
         return
     elif len(args) == 1:
         m = Main()

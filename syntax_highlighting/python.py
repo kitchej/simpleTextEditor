@@ -1,6 +1,5 @@
 from syntax_highlighting.syntax_highlighter import SyntaxHighlighter
 import editor
-import tkinter as tk
 import re
 
 
@@ -29,7 +28,7 @@ class PythonSyntaxHighlighter(SyntaxHighlighter):
         self.add_tag("self", "#b300b3")
 
     def highlight_syntax(self):
-        self._text = self._text_obj.get(0.0, tk.END)
+        self._text = self._text_obj.get(0.0, "end")
         for keyword in self.keywords:
             self.highlight_word(keyword, "keywords")
         for builtin in self.builtins:

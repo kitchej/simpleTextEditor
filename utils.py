@@ -1,20 +1,37 @@
 import tkinter as tk
 
 
-def get_word_indexes(word, text_widget, regex=False, no_case=False, start="1.0"):
+def get_first_string_index(string, text_widget, regex=False, no_case=False, start="1.0"):
     """
-    A helper function that finds the start and end indexes of every instance of a word within a text widget
+    A helper function that finds the start and end index of the FIRST instance of a string within a text widget
+    """
+    length = tk.IntVar()
+    word_start = text_widget.search(string, start, regexp=regex, stopindex=tk.END, nocase=no_case, count=length)
+    if word_start == '':
+        return None
+    word_start_index = word_start.split(".")
+    start_row = int(word_start_index[0])
+    start_column = int(word_start_index[1])
+    end_row = start_row + string.count('\n')
+    end_column = start_column + length.get()
+    word_end = f"{end_row}.{end_column}"
+    return word_start, word_end
+
+
+def get_string_indexes(string, text_widget, regex=False, no_case=False, start="1.0"):
+    """
+    A helper function that finds the start and end indexes of ALL instances of a string within a text widget
     """
     length = tk.IntVar()
     out = []
     while start != text_widget.index(tk.END):
-        word_start = text_widget.search(word, start, regexp=regex, stopindex=tk.END, nocase=no_case, count=length)
+        word_start = text_widget.search(string, start, regexp=regex, stopindex=tk.END, nocase=no_case, count=length)
         if word_start == '':
             break
         word_start_index = word_start.split(".")
         start_row = int(word_start_index[0])
         start_column = int(word_start_index[1])
-        end_row = start_row + word.count('\n')
+        end_row = start_row + string.count('\n')
         end_column = start_column + length.get()
         word_end = f"{end_row}.{end_column}"
         start = word_end
