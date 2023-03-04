@@ -4,7 +4,6 @@ import tkinter as tk
 from tkinter import messagebox, filedialog
 
 from syntax_highlighting.python import PythonSyntaxHighlighter
-from syntax_highlighting.c import CSyntaxHighlighter
 
 
 class FileMenu(tk.Menu):
@@ -30,8 +29,7 @@ class FileMenu(tk.Menu):
         self.add_command(label='Save as', command=self.save_as)
         self.add_command(label='New', accelerator='Ctrl+N', command=self.new_file)
 
-        self.syntax_highlighters = {"py": PythonSyntaxHighlighter(self.editor_obj),
-                                    'c': CSyntaxHighlighter(self.editor_obj)}
+        self.syntax_highlighters = {"py": PythonSyntaxHighlighter(self.editor_obj)}
 
     def __config_syntax_highlighter(self, filename):
         filename = os.path.split(filename)[-1]

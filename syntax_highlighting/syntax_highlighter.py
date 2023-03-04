@@ -33,13 +33,10 @@ class SyntaxHighlighter(ABC):
         if self._text == "":
             return False
         matches = re.findall(pattern, self._text)
-        print(matches)
         if len(matches) == 0:
             return False
         for match in matches:
             indexes = utils.get_word_indexes(match, self._text_obj)
-            if match == '"""\nPython program that prints out a Hello World a certain number of times\n"""':
-                print(indexes)
             for index in indexes:
                 self._text_obj.tag_add(tag_name, index[0], index[1])
         return True, matches
