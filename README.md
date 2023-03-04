@@ -1,9 +1,9 @@
-# Simple Text Editor
+# tkEdit
 
-A simple text editor made with Tkinter and Python. 
+A text editor made with Tkinter and Python. 
 
 ## Requirements
 - Python 3
 
 ## Usage
-```simpleTextEditor.py [filepath]```
+```tkEdit.py [filepath]```
