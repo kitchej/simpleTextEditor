@@ -65,8 +65,11 @@ class FindAndReplaceWin:
         if word == '':
             return
 
-        self.found_words = get_word_indexes(word, self.editor_obj, match_word=self.match_word.get(),
-                                            match_case=self.match_case.get())
+        if self.match_word.get():
+            self.found_words = get_word_indexes(f"\\m{word}\\M", self.editor_obj, regex=True,
+                                                no_case=not self.match_case.get())
+        else:
+            self.found_words = get_word_indexes(word, self.editor_obj, no_case=not self.match_case.get())
         clear_tags('found', self.editor_obj)
         if self.found_words:
             self.word_counter = 1

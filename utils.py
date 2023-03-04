@@ -1,55 +1,24 @@
 import tkinter as tk
 
 
-def get_word_indexes(word, text_widget, match_word=0, match_case=0, start=1.0):
+def get_word_indexes(word, text_widget, regex=False, no_case=False, start="1.0"):
     """
     A helper function that finds the start and end indexes of every instance of a word within a text widget
     """
-    # we need to reverse the match_word boolean because tk.Text.search() expects a 1 to activate a no-case search
-    if match_case == 1:
-        match_case = 0
-    else:
-        match_case = 1
-    punctuation = [' ', ',', '.', '!', '?', ':', ';', '"', '\'', '\\', '/', '<', '>', '`', '~', '@', '#', '$', '%',
-                   '&', '*', '(', ')', '{', '}', '[', ']', '+', '=', '-', '|', '~', '`']
+    length = tk.IntVar()
     out = []
-
-    # tkinter puts a new line at the end of text in a textbox, so we will need to account for that
-    text_end_column = int(text_widget.index("end - 1c").split('.')[1])
-
     while start != text_widget.index(tk.END):
-        word_start = text_widget.search(word, start, stopindex=tk.END, nocase=match_case)
+        word_start = text_widget.search(word, start, regexp=regex, stopindex=tk.END, nocase=no_case, count=length)
         if word_start == '':
             break
         word_start_index = word_start.split(".")
         start_row = int(word_start_index[0])
         start_column = int(word_start_index[1])
-        end_column = start_column + len(word)
-        word_end = f"{start_row}.{end_column}"
+        end_row = start_row + word.count('\n')
+        end_column = start_column + length.get()
+        word_end = f"{end_row}.{end_column}"
         start = word_end
-
-        if match_word == 1:
-            if word_start == '1.0':
-                # Just check the right side of the word
-                characters = text_widget.get(word_start, f"{start_row}.{end_column + 1}")
-                if characters[-1] in punctuation:
-                    out.append((word_start, word_end))
-            elif end_column == text_end_column:
-                # Just check the left side of the word
-                characters = text_widget.get(f"{start_row}.{start_column - 1}", word_end)
-                if characters[0] in punctuation:
-                    out.append((word_start, word_end))
-            elif word_start_index == '1.0' and end_column == text_end_column:
-                # Check neither side of the word
-                out.append((word_start, word_end))
-            else:
-                # Check both sides of the word
-                characters = text_widget.get(f"{start_row}.{start_column - 1}", f"{start_row}.{end_column + 1}")
-                if characters[0] in punctuation and characters[-1] in punctuation:
-                    out.append((word_start, word_end))
-        else:
-            out.append((word_start, word_end))
-
+        out.append((word_start, word_end))
     return out
 
 

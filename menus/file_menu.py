@@ -3,6 +3,8 @@ from pathlib import Path
 import tkinter as tk
 from tkinter import messagebox, filedialog
 
+from syntax_highlighting.python import PythonSyntaxHighlighter
+
 
 class FileMenu(tk.Menu):
     def __init__(self, parent):
@@ -26,6 +28,21 @@ class FileMenu(tk.Menu):
         self.add_command(label='Save', accelerator='Ctrl+S', command=self.save)
         self.add_command(label='Save as', command=self.save_as)
         self.add_command(label='New', accelerator='Ctrl+N', command=self.new_file)
+
+        self.syntax_highlighters = {"py": PythonSyntaxHighlighter(self.editor_obj)}
+
+    def __config_syntax_highlighter(self, filename):
+        filename = os.path.split(filename)[-1]
+        extension = filename.split('.')
+        if len(extension) > 1:
+            extension = extension[-1]
+            try:
+                self.parent.syntax_highlighter = self.syntax_highlighters[extension]
+            except KeyError:
+                self.parent.syntax_highlighter = None
+        else:
+            self.parent.syntax_highlighter = None
+        self.parent.update_syntax_highlighting()
 
     def __save_file(self):
         text = self.editor_obj.get(0.0, tk.END)
@@ -85,11 +102,10 @@ class FileMenu(tk.Menu):
             messagebox.showerror('Error', 'File not saved!')
             return
         else:
-            if os.path.exists(f"{os.path.split(self.filepath)[-1]}_ignore"):
-                os.rename(f"{os.path.split(self.filepath)[-1]}_ignore", f"{os.path.split(chosen_filepath)[-1]}_ignore")
             self.filepath = chosen_filepath
         self.update_recent_files()
         self.__save_file()
+        self.__config_syntax_highlighter(os.path.split(self.filepath)[-1])
 
     def open_file(self, filepath):
         filename = os.path.split(self.filepath)[-1]
@@ -123,6 +139,7 @@ class FileMenu(tk.Menu):
         self.editor_obj.delete(0.0, tk.END)
         self.editor_obj.insert(0.0, text.strip('\n'))
         self.editor_obj.edit_modified(False)
+        self.__config_syntax_highlighter(filename)
 
     def open_from_filemanager(self, *args):
         filename = os.path.split(self.filepath)[-1]
@@ -152,6 +169,7 @@ class FileMenu(tk.Menu):
         self.filepath = 'Untitled.txt'
         self.parent.filename = self.filepath
         self.parent.title(self.filepath)
+        self.parent.syntax_highlighter = None
         self.editor_obj.edit_modified(False)
         if isinstance(self.parent.FIND_AND_REP_WIN, tk.Toplevel):
             self.parent.FIND_AND_REP_WIN.destroy()
