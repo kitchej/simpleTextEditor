@@ -19,7 +19,6 @@ class PythonSyntaxHighlighter(SyntaxHighlighter):
             if keyword in self.builtins:
                 self.builtins.remove(keyword)
 
-        # self.string_regex = re.compile(r"(?i:r|u|f|fr|rf|b|br|rb)?[\"\'].*[\"\']", re.DOTALL)
         self.string_regex = re.compile(r"(?i:r|u|f|fr|rf|b|br|rb)?[\"\'][^\"\'].*?[\"\']")
         self.one_line_comment_regex = re.compile(r"#.*(?=\n)")
         self.multiline_comment_regex = re.compile(r"[\"\']{3}.*?[\"\']{3}", re.DOTALL)
